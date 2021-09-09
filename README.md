@@ -53,3 +53,7 @@ All Code is licensed under GPL v3, apart from 'playertemplate.asm' or 'player.as
 This lets you use anything produced with the software with the only reistrictions being credit for the player.
 
 Changes to the tracker itself should be given back to the community.
+
+## Included Audio Mod
+
+The included mod is a modified version of a song that is bundled with [FamiTracker](<http://famitracker.com/), it is credited as being by 'Anon 200712', and is called 'Dubmood - 3D Galax', which in turn is a copy of a song by Borgar Thorsteinsson of the same name.
