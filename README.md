@@ -56,4 +56,4 @@ Changes to the tracker itself should be given back to the community.
 
 ## Included Audio Mod
 
-The included mod is a modified version of a song that is bundled with [FamiTracker](<http://famitracker.com/), it is credited as being by 'Anon 200712', and is called 'Dubmood - 3D Galax', which in turn is a copy of a song by Borgar Thorsteinsson of the same name.
+The included mod is a modified version of a song that is bundled with [FamiTracker](<http://famitracker.com/), it is credited as being by 'Anon 200712', and is called 'Dubmood - 3D Galax', which is credited in the mod to Borgar Thorsteinsson. This was in turn originally written by Ben Daglish. (See the [description](https://www.youtube.com/watch?v=-2AgiLNNuuk).)
