@@ -226,7 +226,6 @@ move_to_start:
     bne move_to_start
 
 no_voice_skip:
-
     lda DATA0   ; load note number
     sta INSTRUMENT_NUMBER, y ; store instrument number
 
