@@ -1,0 +1,22 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WinPlayer"
+        xmlns:Controls="clr-namespace:WinPlayer.Controls" x:Class="WinPlayer.InstrumentWindow"
+        mc:Ignorable="d"
+        Title="InstrumentWindow" Height="800" Width="815" Closed="Window_Closed">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="1*"></RowDefinition>
+            <RowDefinition Height="22"></RowDefinition>
+        </Grid.RowDefinitions>
+        <Button Grid.Row="1" Content="Ok" HorizontalAlignment="Right" Height="20" Margin="3,0,3,0" VerticalAlignment="Top" Width="90" Click="Button_Click"/>
+        <Controls:Instrument x:Name="InstrumentDisplay" HorizontalAlignment="stretch" Height="740" VerticalAlignment="Top" Width="auto"/>
+
+    </Grid>
+</Window>

@@ -1,0 +1,9 @@
+font-*
+bin
+obj
+*.user
+*.pmp
+*.prg
+labels.txt
+map.txt
+.vs
