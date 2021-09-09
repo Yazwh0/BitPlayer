@@ -38,9 +38,13 @@ I'd suggest opening the repository folder in Visual Studio Code to get an unders
 
 I'll expand on how to use the player in your own code later, but the basis is that the setup is in 'modplayer.asm', with 'display.asm' being the main application and making calls to the player.
 
-## Todo
+## Commands
 
-There is a whole bunch of things to do.
+Commands are a work in progress. They are included in the track data in the .asm, however they are not implemented at all. Best ignore them for now.
+
+## PCM
+
+Not yet implmented. I'd like to know more about the hardware first. Will PCM have the total volume of all 16 PSG voices combined?
 
 ## License
 
