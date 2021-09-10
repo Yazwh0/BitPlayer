@@ -1,8 +1,23 @@
+
+;https://opensource.org/licenses/BSD-3-Clause
+
+;Copyright 2021 Yazwho
+
+;Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+;1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+;2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+;3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+;THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+
+; uncomment if you're not including this elsewhere.
 ;.include "./library/copytovram.asm"
 
-;.export Player_Variables
-;.export Player_Initialise
-;.export Player_Vsync
 
 .scope
 
@@ -95,18 +110,19 @@ clear_psg_loop:
     .local no_note_adjust
     .local note_adjust_done
     .local skipinstr
+    .local test
 
     lda INSTRUMENT_DATA_START + INSTRUMENT_DATA_POSITION + (offset * 2)
     beq instrument_not_playing
     tay
-;stp
+
     ; adjust note
     lda (INSTRUMENT_START + INSTRUMENT_ADDR + (offset * 2)), y
     clc
     adc INSTRUMENT_NUMBER + (offset * 2)
 
     tax
-;stp
+
     lda player_notelookup, x
     sta DATA0
 
@@ -118,6 +134,7 @@ clear_psg_loop:
     ; volume
     lda (INSTRUMENT_START + INSTRUMENT_ADDR + (offset * 2)), y
     sta DATA0
+
     dey
     beq instrument_played
 
@@ -171,7 +188,6 @@ instrument_done:
 
 play_instruments:
     ; PLAY INSTRUMENTS
-;stp
     ; PSG Start.
     lda #$11
     sta ADDRx_L
@@ -180,7 +196,6 @@ play_instruments:
     lda #$c0
     sta ADDRx_L
 
-;stp
 .repeat 7, I
 Play_Instrument I
 .endrepeat
@@ -211,7 +226,6 @@ play_line:
 
     ldy #0 ; y is the position in the output
 
-;stp
     lda DATA0 ; number of voices till next action.
     beq no_voice_skip
 
@@ -491,7 +505,6 @@ pattern_10_init:
     stp ; should never reach here
 
 restart:
-
     lda #$0E ; playlist length
     sta PATTERN_INDEX
 
@@ -499,7 +512,6 @@ restart:
     dex
     jmp play_next_pattern
 .endmacro
-
 
 .macro Player_Data
 patterns:
@@ -529,6 +541,7 @@ instruments_play:
 	.word instrument_10
 	.word instrument_11
 	.word instrument_12
+	.word $0000
 
 instrument_length:
 	.byte $3E, $08 ; 21 steps, 18 repeat
@@ -544,6 +557,7 @@ instrument_length:
 	.byte $11, $00 ; 6 steps, -1 repeat
 	.byte $2F, $00 ; 16 steps, -1 repeat
 	.byte $14, $00 ; 7 steps, -1 repeat
+	.byte $00, $00
 
 instrument_0:
 	.byte $7F, $C3, $0E; Width 63 + Wave Sawtooth, Volume 3, NoteAdj 7
