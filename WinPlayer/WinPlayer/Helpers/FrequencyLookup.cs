@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace WinPlayer
 {
-    public static class FreqencyLookup
+    public static class FrequencyLookup
     {
         public static (double Frequency, bool Normal) Lookup(int noteNumber) =>  noteNumber switch
         {
@@ -121,5 +121,11 @@ namespace WinPlayer
 
             _ => (0, false)
         };
+
+        public static int FrequencyToVera(double frequency) => (int)(frequency / (48828.125 / Math.Pow(2, 17)));
+
+        public static double VeraToFreqency(int vera) => vera * (48828.125 / Math.Pow(2, 17));
+
+        public static double NoteStep(int noteNumber) => Lookup(noteNumber).Frequency / 6;
     }
 }

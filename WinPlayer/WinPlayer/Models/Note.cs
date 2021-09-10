@@ -30,13 +30,7 @@ namespace WinPlayer.Models
         }
 
         [JsonIgnore]
-        public string CommandStr => Command switch
-        {
-            Commands.None => "",
-            Commands.FrequencyDown => "Fq Dn",
-            Commands.Warble => "Warble",
-            _ => "??"
-        };
+        public string CommandStr => CommandFactory.GetDisplay(Command);
 
         [JsonIgnore]
         public string CommandParamStr

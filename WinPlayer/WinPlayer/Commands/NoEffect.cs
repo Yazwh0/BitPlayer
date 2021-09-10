@@ -9,6 +9,7 @@ namespace WinPlayer.Command
 {
     public class NoEffect : ICommand
     {
+        public Models.Note? Note { get; set; }
         public short Parameters { get ; set ; }
 
         public void ApplyNext(IVeraWaveform generator)

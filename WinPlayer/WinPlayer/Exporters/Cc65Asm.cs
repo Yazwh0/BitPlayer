@@ -59,7 +59,7 @@ namespace WinPlayer.Exporters
                 } 
                 else
                 {
-                    noteNumLookupSb.AppendLine($"\t.word ${FrequencyToVera(FreqencyLookup.Lookup(i).Frequency):X4}");
+                    noteNumLookupSb.AppendLine($"\t.word ${FrequencyLookup.FrequencyToVera(FrequencyLookup.Lookup(i).Frequency):X4}");
                 }
             }
         }
@@ -180,7 +180,7 @@ namespace WinPlayer.Exporters
                                 patternSize++;
                             }
 
-                            patternsSb.AppendLine($"\t.byte ${(note.NoteNum - 1)* 2:X2}\t; Note {note.NoteNum} (*2) {note.NoteStr} - Vera {FrequencyToVera(FreqencyLookup.Lookup(note.NoteNum).Frequency):X4}");
+                            patternsSb.AppendLine($"\t.byte ${(note.NoteNum - 1)* 2:X2}\t; Note {note.NoteNum} (*2) {note.NoteStr} - Vera {FrequencyLookup.FrequencyToVera(FrequencyLookup.Lookup(note.NoteNum).Frequency):X4}");
                             //patternsSb.AppendLine($"\t.word ${FrequencyToVera(FreqencyLookup.Lookup(note.NoteNum).Frequency):X4}\t; Note {note.NoteNum} {note.NoteStr}");
                             patternsSb.AppendLine($"\t.byte ${note.InstrumentNumber * 2:X2}\t; Instrument {note.InstrumentNumber}");
                             patternSize += 2;
@@ -246,10 +246,10 @@ namespace WinPlayer.Exporters
             patternWidthSb.Append($"{maxWidth+1}");
         }
 
-        private int FrequencyToVera(double frequency)
+        /*private int FrequencyToVera(double frequency)
         {
             return (int)(frequency / (48828.125 / Math.Pow(2, 17)));
-        }
+        }*/
 
         private void AddInstruments(Song song, Dictionary<CodeParts, StringBuilder> output)
         {

@@ -22,7 +22,7 @@
 .scope
 
 ; need to run this maco to define where to keep the data.
-.macro Player_Variables frameIndex, lineIndex, patternIndex, nextLineCounter, vhPos, vmPos, vlPos, instrumentDataZP, instrumentCommandData, instrumentPosition, instrumentNumber
+.macro Player_Variables frameIndex, lineIndex, patternIndex, nextLineCounter, vhPos, vmPos, vlPos, instrumentDataZP, instrumentCommandData, instrumentPosition, instrumentNumber, playerScratch
 ; Memory locations for variables
 FRAME_INDEX = frameIndex
 LINE_INDEX = lineIndex
@@ -37,24 +37,34 @@ PATTERN_POS_L = vlPos
 ; Needs 2 * 7 bytes. 
 ; .word instrument address
 INSTRUMENT_START = instrumentDataZP
-INSTRUMENT_ADDR = $00
+INSTRUMENT_ADDR = instrumentDataZP
 
 ; Needs 2 * 7 bytes. 
 ; .word command parameters
 INSTRUMENT_COMMAND_START = instrumentCommandData
-INSTRUMENT_COMMAND_PARAM0 = $00
-INSTRUMENT_COMMAND_PARAM1 = $01
+INSTRUMENT_COMMAND_PARAM0 = instrumentCommandData
+INSTRUMENT_COMMAND_PARAM1 = instrumentCommandData + 1
 
 ; instrument data 
 ; .byte position (decreases)
 ; .byte current command 
 INSTRUMENT_DATA_START = instrumentPosition
-INSTRUMENT_DATA_POSITION = $00
-INSTRUMENT_DATA_COMMAND = $01
+INSTRUMENT_DATA_POSITION = instrumentPosition
+INSTRUMENT_DATA_COMMAND = instrumentPosition + 1
 
 ; instrument number
 ; .byte number
+; .byte repeat position
+INSTRUMENT_NUMBER_START = instrumentNumber
 INSTRUMENT_NUMBER = instrumentNumber
+INSTRUMENT_NUMBER_REPEAT = instrumentNumber + 1
+
+; 4 bytes of scrach space for the player
+PLAYER_SCRATCH = playerScratch
+PLAYER_SCRATCH_FREQL = PLAYER_SCRATCH
+PLAYER_SCRATCH_FREQH = PLAYER_SCRATCH + 1
+PLAYER_SCRATCH_VOLUME = PLAYER_SCRATCH + 2
+PLAYER_SCRATCH_WIDTH = PLAYER_SCRATCH + 3
 
 .endmacro
 
@@ -78,7 +88,7 @@ clear_loop:
     stz INSTRUMENT_DATA_START - 1, x
     stz INSTRUMENT_START - 1, x
     stz INSTRUMENT_COMMAND_START - 1, x
-    stz INSTRUMENT_NUMBER - 1, x
+    stz INSTRUMENT_NUMBER_START - 1, x
     dex
     bne clear_loop
 
@@ -110,51 +120,73 @@ clear_psg_loop:
     .local no_note_adjust
     .local note_adjust_done
     .local skipinstr
-    .local test
+    .local check_command
+    .local command_done
 
-    lda INSTRUMENT_DATA_START + INSTRUMENT_DATA_POSITION + (offset * 2)
+    lda INSTRUMENT_DATA_POSITION + (offset * 2)
     beq instrument_not_playing
     tay
 
     ; adjust note
-    lda (INSTRUMENT_START + INSTRUMENT_ADDR + (offset * 2)), y
+    lda (INSTRUMENT_ADDR + (offset * 2)), y
     clc
     adc INSTRUMENT_NUMBER + (offset * 2)
 
     tax
 
     lda player_notelookup, x
-    sta DATA0
+    sta PLAYER_SCRATCH_FREQL
 
     lda player_notelookup+1, x
-    sta DATA0
+    sta PLAYER_SCRATCH_FREQH
 
     dey
 
     ; volume
-    lda (INSTRUMENT_START + INSTRUMENT_ADDR + (offset * 2)), y
-    sta DATA0
+    lda (INSTRUMENT_ADDR + (offset * 2)), y
+    sta PLAYER_SCRATCH_VOLUME
 
     dey
     beq instrument_played
 
     ; width
-    lda (INSTRUMENT_START + INSTRUMENT_ADDR + (offset * 2)), y
-    sta DATA0
+    lda (INSTRUMENT_ADDR + (offset * 2)), y
+    sta PLAYER_SCRATCH_WIDTH
+
     dey
     
     tya
-    sta INSTRUMENT_DATA_START + INSTRUMENT_DATA_POSITION + (offset * 2)
+    sta INSTRUMENT_DATA_POSITION + (offset * 2)
 
-    jmp instrument_done
+    jmp check_command
 
 instrument_played:
-    lda (INSTRUMENT_START + INSTRUMENT_ADDR + (offset * 2))
-    sta DATA0
+    lda (INSTRUMENT_ADDR + (offset * 2))
+    sta PLAYER_SCRATCH_WIDTH
 
     ; get repeat position (0 will stop)
-    lda INSTRUMENT_NUMBER + 1 + (offset * 2)
-    sta INSTRUMENT_DATA_START + INSTRUMENT_DATA_POSITION + (offset * 2)
+    lda INSTRUMENT_NUMBER_REPEAT + (offset * 2)
+    sta INSTRUMENT_DATA_POSITION + (offset * 2)
+
+check_command:
+    lda INSTRUMENT_DATA_COMMAND + (offset * 2)
+    beq command_done
+
+    tax
+
+    ; handle commands!
+    lda #(offset * 2)
+    stp
+
+command_done:
+    lda PLAYER_SCRATCH_FREQL
+    sta DATA0
+    lda PLAYER_SCRATCH_FREQH
+    sta DATA0
+    lda PLAYER_SCRATCH_VOLUME
+    sta DATA0
+    lda PLAYER_SCRATCH_WIDTH
+    sta DATA0
 
     jmp instrument_done
 
@@ -202,6 +234,9 @@ Play_Instrument I
 
     rts
 
+; commands
+
+
 next_line: ; !label is important!
     lda #$ff ; Tempo - gets modified in new pattern init
     sta FRAME_INDEX
@@ -248,30 +283,30 @@ no_voice_skip:
     ; store instrment address and pos. (instrument data is reversed)
 
     lda instruments_play, x
-    sta INSTRUMENT_START + INSTRUMENT_ADDR, y
+    sta INSTRUMENT_ADDR, y
     lda instruments_play + 1, x
-    sta INSTRUMENT_START + INSTRUMENT_ADDR + 1, y
+    sta INSTRUMENT_ADDR + 1, y
 
     lda instrument_length, x
-    sta INSTRUMENT_DATA_START + INSTRUMENT_DATA_POSITION, y
+    sta INSTRUMENT_DATA_POSITION, y
 
     lda instrument_length + 1, x
-    sta INSTRUMENT_NUMBER + 1, y
+    sta INSTRUMENT_NUMBER_REPEAT, y
 
     lda DATA0   ; command
     beq no_command
 
-    sta INSTRUMENT_DATA_START + INSTRUMENT_DATA_COMMAND, y
+    sta INSTRUMENT_DATA_COMMAND, y
 
     lda DATA0   ; command data
-    sta INSTRUMENT_COMMAND_START + INSTRUMENT_COMMAND_PARAM0, y
+    sta INSTRUMENT_COMMAND_PARAM0, y
     lda DATA0
-    sta INSTRUMENT_COMMAND_START + INSTRUMENT_COMMAND_PARAM1, y
+    sta INSTRUMENT_COMMAND_PARAM1, y
 
     jmp next_voice
 no_command:
     lda #0
-    sta INSTRUMENT_DATA_START + INSTRUMENT_DATA_COMMAND, y
+    sta INSTRUMENT_DATA_COMMAND, y
 
 next_voice:
     iny

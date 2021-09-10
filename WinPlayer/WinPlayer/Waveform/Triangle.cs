@@ -18,7 +18,7 @@ namespace WinPlayer.Waveform
             set
             {
                 _noteNumber = value;
-                Frequency = FreqencyLookup.Lookup(NoteNumber).Frequency;
+                Frequency = FrequencyLookup.Lookup(NoteNumber).Frequency;
             }
         }
 

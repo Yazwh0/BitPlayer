@@ -10,6 +10,7 @@ namespace WinPlayer.Command
 {
     public class Warble : ICommand
     {
+        public Models.Note? Note { get; set; }
         public short Parameters { get; set ; }
 
         private int _state = 0;

@@ -112,11 +112,11 @@ namespace WinPlayer.Player
                     if (generator == null)
                         continue;
 
-                    if (_timeIndex == 0)
+/*                    if (_timeIndex == 0)
                     {
                         _effects[i].ApplyNext(generator);
                     }
-
+*/
                     var toAdd = generator.GetNext();
 
                     buffer[offset + index] += toAdd;
@@ -167,16 +167,16 @@ namespace WinPlayer.Player
                     if (instrument != null && instrument.RepeatStart != -1)
                     {
                         _currentLevelIndex[i] = instrument.RepeatStart;
-                        SetVolume(i, instrument.Levels[_currentLevelIndex[i]++]);
+                        SetVolume(i, instrument.Levels[_currentLevelIndex[i]++], _effects[i]);
                     }
                     continue;
                 }
 
-                SetVolume(i, instrument.Levels[_currentLevelIndex[i]++]);
+                SetVolume(i, instrument.Levels[_currentLevelIndex[i]++], _effects[i]);
             }
         }
 
-        private void SetVolume(int index, Models.InstrumentStep step)
+        private void SetVolume(int index, Models.InstrumentStep step, ICommand? command)
         {
             var generator = _currentWaveFormGenerators[index];
 
@@ -187,6 +187,11 @@ namespace WinPlayer.Player
             generator.Width = step.Width;
             if (_currentNotes[index] != null && _currentNotes[index].NoteNum != 0)
                 generator.NoteNumber = _currentNotes[index].NoteNum + step.NoteAdjust;
+
+            if (command != null)
+            {
+                command.ApplyNext(generator);
+            }
         }
 
         private Models.Instrument? GetInstrument(int index, Models.Note? note)
@@ -232,22 +237,14 @@ namespace WinPlayer.Player
 
                     if (generator != null && instrument != null)
                     {
-                        generator.Frequency = FreqencyLookup.Lookup(note.NoteNum).Frequency;
+                        generator.Frequency = FrequencyLookup.Lookup(note.NoteNum).Frequency;
                     } 
-                    else if (_currentWaveFormGenerators[i] != null)
-                    {
-                        _effects[i].Remove(_currentWaveFormGenerators[i]);
-                    }
 
-                    _effects[i] = CommandFactory.GetCommand(note.Command, note.CommandParam);
+                    _effects[i] = CommandFactory.GetCommand(note.Command, note.CommandParam, note);
                 } 
                 else if (note.Command != Commands.None)
                 {
-                    if (_currentWaveFormGenerators[i] != null)
-                    {
-                        _effects[i].Remove(_currentWaveFormGenerators[i]);
-                    }
-                    _effects[i] = CommandFactory.GetCommand(note.Command, note.CommandParam);
+                    _effects[i] = CommandFactory.GetCommand(note.Command, note.CommandParam, note);
                 }
             }
         }

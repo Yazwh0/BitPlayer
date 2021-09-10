@@ -376,13 +376,13 @@ no_interupt:
     stz DATA0
     stz DATA0
 
-    lda pINSTRUMENT_COMMAND_ZP, x
+    lda pINSTRUMENT_COMMAND, x
     display_a_hex
 
     stz DATA0
     stz DATA0
 
-    lda pINSTRUMENT_COMMAND_ZP + 1, x
+    lda pINSTRUMENT_COMMAND + 1, x
     display_a_hex
 
     rts

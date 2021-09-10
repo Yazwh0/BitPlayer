@@ -138,6 +138,15 @@ namespace WinPlayer.Controls
                 _fireEvents = true;
                 return;
             }
+
+            if (e.Key == Key.Escape)
+            {
+                if (Globals.WaveOut != null)
+                {
+                    Globals.WaveOut.Stop();
+                    Globals.WaveOut = null;
+                }
+            }
         }
 
         private void Notes_SelectionChanged(object sender, SelectionChangedEventArgs e)

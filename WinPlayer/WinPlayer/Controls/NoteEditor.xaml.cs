@@ -121,7 +121,7 @@ namespace WinPlayer.Controls
             if (_value?.NoteNum != 0)
             {
                 InstrumentList.SelectedValue = _value?.InstrumentNumber;
-                CommandParameter.Text = _value?.CommandParam.ToString();
+                CommandParameter.Text = _value?.CommandParam.ToString("X4");
                 CommandList.SelectedItem = _value?.Command;
             }
         }
@@ -146,7 +146,7 @@ namespace WinPlayer.Controls
         {
             if (_fireEvents && _value != null)
             {
-                if (short.TryParse(CommandParameter.Text, out var commandParam))
+                if (short.TryParse(CommandParameter.Text, System.Globalization.NumberStyles.HexNumber, null, out var commandParam))
                 {
                     _value.CommandParam = commandParam;
                 }

@@ -40,7 +40,7 @@ namespace WinPlayer
             _generator.NoteNumber = note.NoteNum;
             _noteNumber = note.NoteNum;
 
-            _command = CommandFactory.GetCommand(note.Command, note.CommandParam);
+            _command = CommandFactory.GetCommand(note.Command, note.CommandParam, note);
         }
 
         public override int Read(float[] buffer, int offset, int count)
@@ -49,7 +49,7 @@ namespace WinPlayer
             {
                 for (int index = 0; index < count; index++)
                 {
-                    buffer[offset + index] = _generator?.GetNext() ?? 0;
+                    buffer[offset + index] = _generator?.GetNext() ?? 0 / 4;
 
                     _timeIndex++;
 
