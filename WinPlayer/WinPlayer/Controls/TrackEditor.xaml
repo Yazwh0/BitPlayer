@@ -16,7 +16,7 @@
         <DataGrid x:Name="Notes" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Stretch" Height="auto" Margin="0,0,0,0" VerticalAlignment="Stretch" Width="auto" 
                   ItemsSource="{Binding}" AutoGenerateColumns="False" SelectionChanged="Notes_SelectionChanged" IsReadOnly="true" SelectionUnit="FullRow" SelectionMode="Single">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Pos" Binding="{Binding Position}" CanUserSort="False"/>
+                <DataGridTextColumn Header="Pos" Binding="{Binding PositionStr}" CanUserSort="False"/>
                 <DataGridTextColumn Header="Note" Binding="{Binding NoteStr}" CanUserSort="False"/>
                 <DataGridTextColumn Header="Ins" Binding="{Binding InstrumentStr}" CanUserSort="False"/>
                 <DataGridTextColumn Header="Com" Binding="{Binding CommandStr}" CanUserSort="False"/>

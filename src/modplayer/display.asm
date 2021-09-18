@@ -324,7 +324,9 @@ no_interupt:
     stz DATA0
     stz DATA0
     
+    ; volume
     lda DATA1
+    and #%00111111 ; take off the l-r
     display_a_hex
 
     stz DATA0

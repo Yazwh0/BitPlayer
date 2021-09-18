@@ -1,4 +1,4 @@
-    Clear-Host
+    cls
     Remove-Item ./src/*.o
     c:/dev/cc65/bin/cl65 --verbose -o build.prg --cpu 65c02 -t cx16 -C src/cx16-asm.cfg -Ln labels.txt -m map.txt -T ./src/main.asm
 

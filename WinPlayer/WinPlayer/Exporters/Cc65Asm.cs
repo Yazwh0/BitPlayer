@@ -28,7 +28,10 @@ namespace WinPlayer.Exporters
             PatternSize,
             PatternJumpTable,
             PatternWidth,
-            NoteNumLookup
+            NoteNumLookup,
+            NoteSlideLookup,
+            CommandJumpTable,
+            HasCommands
         }
 
         public async Task Export(Song song, string filename)
@@ -50,16 +53,27 @@ namespace WinPlayer.Exporters
             var noteNumLookupSb = new StringBuilder();
             output.Add(CodeParts.NoteNumLookup, noteNumLookupSb);
 
+            var noteSlideLookupSb = new StringBuilder();
+            output.Add(CodeParts.NoteSlideLookup, noteSlideLookupSb);
+
             // starts at 21
-            for(var i = 1; i <= 128; i++)
+            for (var i = 1; i <= 128; i++)
             {
                 if (i < 21)
                 {
                     noteNumLookupSb.AppendLine($"\t.word $0000");
-                } 
+                }
                 else
                 {
                     noteNumLookupSb.AppendLine($"\t.word ${FrequencyLookup.FrequencyToVera(FrequencyLookup.Lookup(i).Frequency):X4}");
+                }
+                if (i < 22)
+                {
+                    noteSlideLookupSb.AppendLine($"\t.word $0000");
+                }
+                else
+                {
+                    noteSlideLookupSb.AppendLine($"\t.word ${FrequencyLookup.FrequencyToVera(FrequencyLookup.FrequencySlide(i)):X4}");
                 }
             }
         }
@@ -116,6 +130,8 @@ namespace WinPlayer.Exporters
             var patternWidthSb = new StringBuilder();
             output.Add(CodeParts.PatternWidth, patternWidthSb);
 
+            var commandsUsed = new Dictionary<Command.Commands, int>();
+
             var maxPattern = song.Patterns.Select(i => i.Number).Max();
             for (var i = 0; i <= maxPattern; i++)
             {
@@ -128,6 +144,38 @@ namespace WinPlayer.Exporters
                     patternInitSb.AppendLine($"\t.word $0000");
                 }
                 patternJumpTableSb.AppendLine($"\t.word pattern_{i}_init");
+            }
+
+            // first have to find the distinct commands used:
+            var cmdIdx = 1;
+            foreach(var p in song.Patterns)
+            {
+                foreach(var t in p.Tracks)
+                {
+                    foreach(var n in t.Notes)
+                    {
+                        if (n.Command != Command.Commands.None && n.NoteNum != 0)
+                        {
+                            if (!commandsUsed.ContainsKey(n.Command))
+                            {
+                                commandsUsed.Add(n.Command, cmdIdx++);
+                            }
+                        }
+                    }
+                }
+            }
+
+            var hasCommandsSb = new StringBuilder();
+            output.Add(CodeParts.HasCommands, hasCommandsSb);
+
+            hasCommandsSb.Append(commandsUsed.Any() ? "1" : "0");
+
+            var commandJumpTableSb = new StringBuilder();
+            output.Add(CodeParts.CommandJumpTable, commandJumpTableSb);
+            
+            foreach(var cmd in commandsUsed)
+            {
+                commandJumpTableSb.AppendLine($"\t.word command_{cmd.Key.ToString().ToLower()}");
             }
 
             patternsSb.AppendLine($"pattern_data:");
@@ -180,10 +228,14 @@ namespace WinPlayer.Exporters
                                 patternSize++;
                             }
 
-                            patternsSb.AppendLine($"\t.byte ${(note.NoteNum - 1)* 2:X2}\t; Note {note.NoteNum} (*2) {note.NoteStr} - Vera {FrequencyLookup.FrequencyToVera(FrequencyLookup.Lookup(note.NoteNum).Frequency):X4}");
-                            //patternsSb.AppendLine($"\t.word ${FrequencyToVera(FreqencyLookup.Lookup(note.NoteNum).Frequency):X4}\t; Note {note.NoteNum} {note.NoteStr}");
-                            patternsSb.AppendLine($"\t.byte ${note.InstrumentNumber * 2:X2}\t; Instrument {note.InstrumentNumber}");
-                            patternSize += 2;
+                            patternsSb.AppendLine($"\t.byte ${(note.NoteNum - 1)* 2:X2}\t; Note {note.NoteNum} (-1*2) {note.NoteStr} - Vera {FrequencyLookup.FrequencyToVera(FrequencyLookup.Lookup(note.NoteNum).Frequency):X4}");
+                            patternSize += 1;
+
+                            if (note.NoteNum != 1)
+                            {
+                                patternsSb.AppendLine($"\t.byte ${note.InstrumentNumber * 2:X2}\t; Instrument {note.InstrumentNumber}");
+                                patternSize += 1;
+                            }
 
                             if (note.Command == Command.Commands.None)
                             {
@@ -192,7 +244,7 @@ namespace WinPlayer.Exporters
                             }
                             else
                             {
-                                patternsSb.AppendLine($"\t.byte ${(int)note.Command:X2}\t; {note.Command.ToString()}");
+                                patternsSb.AppendLine($"\t.byte ${commandsUsed[note.Command] * 2:X2}\t; {note.Command.ToString()}");
                                 patternsSb.AppendLine($"\t.word ${note.CommandParam:X4}\t;");
                                 patternSize += 3;
                             }

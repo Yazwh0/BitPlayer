@@ -11,7 +11,7 @@ namespace WinPlayer.Command
         public Models.Note? Note { get; set; }
         public short Parameters { get; set; }
         public byte Parameters0 => (byte)(Parameters & 255);
-        public byte Parameters1 => (byte)(Parameters >> 80);
+        public byte Parameters1 => (byte)(Parameters >> 8);
 
         public void ApplyNext(Waveform.IVeraWaveform generator);
    //     public void Remove(Waveform.IVeraWaveform generator);
@@ -20,9 +20,13 @@ namespace WinPlayer.Command
     public enum Commands
     {
         None,
-        Warble,
-        FrequencySlide,
         ClearCommand,
+        FrequencySlide,
+        SlideUpToNote,
+        SlideDownToNote,
+        PitchShiftUp,
+        PitchShiftDown,
+        Silence
     }
 
     public static class CommandFactory
@@ -32,8 +36,13 @@ namespace WinPlayer.Command
             ICommand toReturn = effect switch
             {
                 Commands.FrequencySlide => new FrequencySlide(),
-                Commands.Warble => new Warble(),
+                //Commands.Warble => new Warble(),
                 Commands.ClearCommand => new NoEffect(),
+                //Commands.NoteSlide => new NoteSlide(),
+                Commands.SlideUpToNote => new SlideUpToNote(),
+                Commands.SlideDownToNote => new SlideDownToNote(),
+                Commands.PitchShiftUp => new PitchShiftUp(),
+                Commands.Silence => new Silence(),
                 _ => new NoEffect()
             };
 
@@ -46,7 +55,12 @@ namespace WinPlayer.Command
         {
             Commands.None => "",
             Commands.FrequencySlide => "Fq Sl",
-            Commands.Warble => "Warble",
+            //Commands.Warble => "Warble",
+            //Commands.NoteSlide => "Nte Sl",
+            Commands.SlideUpToNote => "Sl Nte Up",
+            Commands.SlideDownToNote => "Sl Nte Dn",
+            Commands.PitchShiftUp => "Pch Sh Up",
+            Commands.Silence => "Silence",
             _ => "??"
         };
     }

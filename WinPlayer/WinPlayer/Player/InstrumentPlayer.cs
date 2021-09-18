@@ -49,7 +49,7 @@ namespace WinPlayer
             {
                 for (int index = 0; index < count; index++)
                 {
-                    buffer[offset + index] = _generator?.GetNext() ?? 0 / 4;
+                    buffer[offset + index] = _generator?.GetNext() ?? 0 / 16;
 
                     _timeIndex++;
 

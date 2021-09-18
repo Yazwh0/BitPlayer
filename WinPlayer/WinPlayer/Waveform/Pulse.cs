@@ -91,7 +91,7 @@ namespace WinPlayer.Waveform
         public static IVeraWaveform? GetGenerator(Models.WaveType waveType) =>
             waveType switch
             {
-                Models.WaveType.None => null,
+                Models.WaveType.None => new None(),
                 Models.WaveType.Pulse => new Pulse(Globals.SampleRate),
                 Models.WaveType.Triangle => new Triangle(Globals.SampleRate),
                 Models.WaveType.Sawtooth => new Sawtooth(Globals.SampleRate),

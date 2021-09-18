@@ -42,8 +42,8 @@ font_tile_3:
 font_tile_4:
 .byte	$9E
 .byte	$9E
-.byte	$9C
-.byte	$7E
+.byte	$9E
+.byte	$7C
 .byte	$1E
 .byte	$1E
 .byte	$1E

@@ -17,12 +17,24 @@ namespace WinPlayer.Models
         public short CommandParam { get; set; }
 
         [JsonIgnore]
+        public string PositionStr
+        {
+            get
+            {
+                return Position.ToString("X2");
+            }
+        }
+
+        [JsonIgnore]
         public string NoteStr
         {
             get
             {
                 if (NoteNum == 0)
                     return "";
+
+                if (NoteNum == 1)
+                    return "---";
 
                 var octave = (int)(NoteNum / 12.0);
                 return "C-C#D-D#E-F-F#G-G#A-A#B-".Substring(NoteNum % 12 * 2, 2) + $"{octave}";

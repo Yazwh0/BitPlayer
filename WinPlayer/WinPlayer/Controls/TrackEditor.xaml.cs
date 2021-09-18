@@ -102,7 +102,7 @@ namespace WinPlayer.Controls
                 var temp = _value.ToList();
 
                 temp.Insert(i, new Models.Note());
-                temp.RemoveAt(64);
+                temp.RemoveAt(temp.Count-1);
 
                 for(var j = 0; j < _value.Length; j++)
                 {
@@ -146,6 +146,19 @@ namespace WinPlayer.Controls
                     Globals.WaveOut.Stop();
                     Globals.WaveOut = null;
                 }
+            }
+
+            if (e.Key == Key.S)
+            {
+                var i = Notes.SelectedIndex;
+                var note = _value[i].Clone();
+                note.NoteNum = 1;
+                NoteChange(note);
+
+                Notes.Items.Refresh();
+                e.Handled = true;
+                _fireEvents = true;
+                return;
             }
         }
 

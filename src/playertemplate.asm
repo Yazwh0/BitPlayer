@@ -113,7 +113,7 @@ clear_psg_loop:
     rts
 .endmacro
 
-.macro Play_Instrument offset
+.macro Play_Instrument offset, hasCommands
     .local instrument_not_playing
     .local instrument_done
     .local instrument_played
@@ -169,14 +169,27 @@ instrument_played:
     sta INSTRUMENT_DATA_POSITION + (offset * 2)
 
 check_command:
+    .if ###HasCommands = 1
+
     lda INSTRUMENT_DATA_COMMAND + (offset * 2)
     beq command_done
 
-    tax
+    tax ; x is now the command
 
-    ; handle commands!
-    lda #(offset * 2)
-    stp
+    ; set return address on the stack as the commands can't jump into a macro
+
+    lda #>(command_done-1)
+    pha
+    lda #<(command_done-1)
+    pha
+
+    ldy #(offset * 2) ; pass y as the offset
+    dex
+    dex
+
+    jmp (command_jump_table, x)
+
+    .endif
 
 command_done:
     lda PLAYER_SCRATCH_FREQL
@@ -213,6 +226,7 @@ instrument_done:
     .local play_next_pattern
     .local pattern_jump_table
     .local restart
+    .local no_note_change
 
 	dec FRAME_INDEX
 	bne play_instruments  
@@ -229,7 +243,7 @@ play_instruments:
     sta ADDRx_L
 
 .repeat ###PatternWidth, I
-Play_Instrument I
+Play_Instrument I, 1
 .endrepeat
 
     rts
@@ -276,12 +290,12 @@ move_to_start:
 
 no_voice_skip:
     lda DATA0   ; load note number
+    beq no_note_change ; if the note number is zero, there is only a command.
     sta INSTRUMENT_NUMBER, y ; store instrument number
 
     ldx DATA0   ; instrument number, already *2 for the lookup.
 
     ; store instrment address and pos. (instrument data is reversed)
-
     lda instruments_play, x
     sta INSTRUMENT_ADDR, y
     lda instruments_play + 1, x
@@ -293,6 +307,7 @@ no_voice_skip:
     lda instrument_length + 1, x
     sta INSTRUMENT_NUMBER_REPEAT, y
 
+no_note_change:
     lda DATA0   ; command
     beq no_command
 
@@ -338,6 +353,7 @@ next_pattern:
     dex
 
 play_next_pattern:
+
     lda pattern_playlist, x
      
     asl ; x is the pattern, so *2 for the offset. assume < 128 patterns
@@ -359,6 +375,102 @@ restart:
     tax
     dex
     jmp play_next_pattern
+
+command_jump_table:
+###CommandJumpTable
+
+.proc command_pitchshiftup
+    ; number of shifts
+    ldx INSTRUMENT_COMMAND_PARAM0, y
+
+    lda INSTRUMENT_NUMBER, y
+    tay ; y now is the note number
+loop:
+    clc
+    lda player_slidelookup, y
+    adc PLAYER_SCRATCH_FREQL
+    sta PLAYER_SCRATCH_FREQL
+    lda player_slidelookup+1, y
+    adc PLAYER_SCRATCH_FREQH
+    sta PLAYER_SCRATCH_FREQH
+
+    dex
+    bne loop
+
+    rts
+.endproc
+
+.proc command_silence
+    ldx INSTRUMENT_COMMAND_PARAM0, y ; total counter
+    beq command_done
+
+    dex
+    txa ; could use stx, if we enforce this on zp?
+    sta INSTRUMENT_COMMAND_PARAM0, y
+    rts
+command_done:
+    stz PLAYER_SCRATCH_VOLUME
+    rts
+.endproc
+
+.proc command_slideuptonote
+    tya
+    tax
+    dec INSTRUMENT_COMMAND_PARAM1, x ; total counter
+    beq command_done
+
+    ldx INSTRUMENT_COMMAND_PARAM0, y ; steps per frame
+
+    lda INSTRUMENT_NUMBER, y
+    tay ; y now is the note number
+loop:
+    clc
+    lda player_slidelookup, y
+    adc PLAYER_SCRATCH_FREQL
+    sta PLAYER_SCRATCH_FREQL
+    lda player_slidelookup+1, y
+    adc PLAYER_SCRATCH_FREQH
+    sta PLAYER_SCRATCH_FREQH
+
+    dex
+    bne loop
+
+    rts
+
+    command_done:
+    stz INSTRUMENT_DATA_COMMAND, x
+    rts
+.endproc
+
+.proc command_slidedowntonote
+    tya
+    tax
+    dec INSTRUMENT_COMMAND_PARAM1, x ; total counter
+    beq command_done
+
+    ldx INSTRUMENT_COMMAND_PARAM0, y ; steps per frame
+
+    lda INSTRUMENT_NUMBER, y
+    tay ; y now is the note number
+loop:
+    clc
+    lda player_slidelookup, y
+    sbc PLAYER_SCRATCH_FREQL
+    sta PLAYER_SCRATCH_FREQL
+    lda player_slidelookup+1, y
+    sbc PLAYER_SCRATCH_FREQH
+    sta PLAYER_SCRATCH_FREQH
+
+    dex
+    bne loop
+
+    rts
+
+    command_done:
+    stz INSTRUMENT_DATA_COMMAND, x
+    rts
+.endproc
+
 .endmacro
 
 .macro Player_Data
@@ -373,6 +485,10 @@ restart:
 .macro Player_NoteLookup
 player_notelookup:
 ###NoteNumLookup
+player_slidelookup:
+###NoteSlideLookup
 .endmacro
+
+
 
 .endscope

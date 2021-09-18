@@ -7,13 +7,12 @@ using WinPlayer.Waveform;
 
 namespace WinPlayer.Command
 {
-    public class FrequencySlide : ICommand
+    public class PitchShiftUp : ICommand
     {
         public Models.Note? Note { get; set; }
         public short Parameters { get; set; }
 
-        private int _step = 0;
-        private int _current = 0;
+        private int _shift = 0;
         private bool _initalised = false;
 
         public void ApplyNext(IVeraWaveform generator)
@@ -22,14 +21,11 @@ namespace WinPlayer.Command
             {
                 _initalised = true;
                 var param1 = ((ICommand)this).Parameters0;
-                _step = param1 > 127 ? param1 - 256 : param1;
-                _current = 0;
+                _shift = param1; //param1 > 127 ? param1 - 256 : param1;
             }
 
-            _current += _step;
+            generator.Frequency = FrequencyLookup.Lookup(generator.NoteNumber).Frequency + FrequencyLookup.FrequencySlide(generator.NoteNumber) * _shift;
 
-            generator.Frequency = FrequencyLookup.Lookup(generator.NoteNumber).Frequency + FrequencyLookup.VeraToFreqency(_current);
-            generator.Frequency = Math.Max(generator.Frequency, 0);
         }
     }
 }

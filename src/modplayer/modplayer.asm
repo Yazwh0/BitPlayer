@@ -19,11 +19,11 @@ pPLAYER_SCRATCH = $20
 Player_Variables pFRAME_INDEX, pLINE_INDEX, pPATTERN_INDEX, pNEXT_LINE_COUNTER, pMOD_VH, pMOD_VM, pMOD_VL, pINSTRUMENT_DATA_ZP, pINSTRUMENT_COMMAND, pINSTRUMENT_POSITION, pINSTRUMENT_NUMBER, pPLAYER_SCRATCH
 
 .proc player_init
-Player_Initialise $00, $50, $00 ; where in vram the pattern data is
+Player_Initialise $01, $00, $00 ; where in vram the pattern data is
 .endproc
 
 .proc player_vsync 
-Player_Vsync $00, $50, $00 ; where in vram the pattern data is
+Player_Vsync $01, $00, $00 ; where in vram the pattern data is
 .endproc
 
 ;.segment DATA

@@ -126,6 +126,6 @@ namespace WinPlayer
 
         public static double VeraToFreqency(int vera) => vera * (48828.125 / Math.Pow(2, 17));
 
-        public static double NoteStep(int noteNumber) => Lookup(noteNumber).Frequency / 6;
+        public static double FrequencySlide(int noteNumber) => (Lookup(noteNumber).Frequency - Lookup(noteNumber-1).Frequency) / 4;
     }
 }
