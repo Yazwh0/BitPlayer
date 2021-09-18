@@ -54,9 +54,10 @@ VSYNC_LATCH = $02
 .include "../library/clearvram.asm"
 .include "../library/copytovram.asm"
 
-.macro display_a_hex
+.macro display_a_hex zerocolour
     .local showzero
     .local done
+
     tay ; store
     beq showzero
 
@@ -76,11 +77,15 @@ VSYNC_LATCH = $02
     sta DATA0
     jmp done
 showzero:
-    stz DATA0
+    .ifnblank zerocolour
+    lda #zerocolour
+    .else
     lda #$02
+    .endif
+
+    stz DATA0
     sta DATA0
     stz DATA0
-    lda #$02
     sta DATA0
 done:
 .endmacro
@@ -129,7 +134,7 @@ done:
     sta ADDRx_L
 
     lda refvalue
-    display_a_hex
+    display_a_hex $01
 
 .endmacro
 
