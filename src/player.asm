@@ -22,7 +22,7 @@
 .scope
 
 ; need to run this maco to define where to keep the data.
-.macro Player_Variables frameIndex, lineIndex, patternIndex, nextLineCounter, vhPos, vmPos, vlPos, instrumentDataZP, instrumentCommandData, instrumentPosition, instrumentNumber, playerScratch
+.macro Player_Variables frameIndex, lineIndex, patternIndex, nextLineCounter, vhPos, vmPos, vlPos, instrumentDataZP, instrumentCommandData, instrumentPosition, instrumentNumber, playerScratch, commandVariables
 ; Memory locations for variables
 FRAME_INDEX = frameIndex
 LINE_INDEX = lineIndex
@@ -66,6 +66,9 @@ PLAYER_SCRATCH_FREQH = PLAYER_SCRATCH + 1
 PLAYER_SCRATCH_VOLUME = PLAYER_SCRATCH + 2
 PLAYER_SCRATCH_WIDTH = PLAYER_SCRATCH + 3
 
+COMMAND_VARIABLES0 = commandVariables
+COMMAND_VARIABLES1 = COMMAND_VARIABLES0 + 1
+
 .endmacro
 
 ; call this once
@@ -108,12 +111,12 @@ clear_psg_loop:
     bne clear_psg_loop
 
     ; we store the pattern data in vram as we pull it in serial. the data0/1 makes this considerably easier.
-    copytovram vh, vm, vl, $10E0, pattern_data
+    copytovram vh, vm, vl, $123F, pattern_data
 
     rts
 .endmacro
 
-.macro Play_Instrument offset, hasCommands
+.macro Play_Instrument offset
     .local instrument_not_playing
     .local instrument_done
     .local instrument_played
@@ -227,6 +230,7 @@ instrument_done:
     .local pattern_jump_table
     .local restart
     .local no_note_change
+    .local instrument_copy_loop
 
 	dec FRAME_INDEX
 	bne play_instruments  
@@ -243,13 +247,42 @@ play_instruments:
     sta ADDRx_L
 
 .repeat 7, I
-Play_Instrument I, 1
+Play_Instrument I
 .endrepeat
 
+; if there are less than 8 tracks, double up for better volume.
+.if 7 <= 8
+
+    lda #1
+    sta CTRL
+
+    ; PSG start
+    lda #$11
+    sta ADDRx_L
+    lda #$f9
+    sta ADDRx_M
+    lda #$c0
+    sta ADDRx_L
+
+    stz CTRL
+
+    ldx #7 + 1
+instrument_copy_loop:
+    lda DATA1
+    sta DATA0
+    lda DATA1
+    sta DATA0
+    lda DATA1
+    sta DATA0
+    lda DATA1
+    sta DATA0
+
+    dex
+    bne instrument_copy_loop
+
+.endif
+
     rts
-
-; commands
-
 
 next_line: ; !label is important!
     lda #$ff ; Tempo - gets modified in new pattern init
@@ -395,11 +428,11 @@ pattern_0_init:
 	jmp play_next
 
 pattern_1_init:
-	lda #(^(vh * $10000 + vm * $100 + vl + 244)) + $10
+	lda #(^(vh * $10000 + vm * $100 + vl + 259)) + $10
 	sta PATTERN_POS_H
-	lda #>(vh * $10000 + vm * $100 + vl + 244)
+	lda #>(vh * $10000 + vm * $100 + vl + 259)
 	sta PATTERN_POS_M
-	lda #<(vh * $10000 + vm * $100 + vl + 244)
+	lda #<(vh * $10000 + vm * $100 + vl + 259)
 	sta PATTERN_POS_L
 	lda #$01 ; first line is 1
 	sta NEXT_LINE_COUNTER
@@ -411,11 +444,11 @@ pattern_1_init:
 	jmp play_next
 
 pattern_2_init:
-	lda #(^(vh * $10000 + vm * $100 + vl + 510)) + $10
+	lda #(^(vh * $10000 + vm * $100 + vl + 525)) + $10
 	sta PATTERN_POS_H
-	lda #>(vh * $10000 + vm * $100 + vl + 510)
+	lda #>(vh * $10000 + vm * $100 + vl + 525)
 	sta PATTERN_POS_M
-	lda #<(vh * $10000 + vm * $100 + vl + 510)
+	lda #<(vh * $10000 + vm * $100 + vl + 525)
 	sta PATTERN_POS_L
 	lda #$01 ; first line is 1
 	sta NEXT_LINE_COUNTER
@@ -427,11 +460,11 @@ pattern_2_init:
 	jmp play_next
 
 pattern_3_init:
-	lda #(^(vh * $10000 + vm * $100 + vl + 806)) + $10
+	lda #(^(vh * $10000 + vm * $100 + vl + 821)) + $10
 	sta PATTERN_POS_H
-	lda #>(vh * $10000 + vm * $100 + vl + 806)
+	lda #>(vh * $10000 + vm * $100 + vl + 821)
 	sta PATTERN_POS_M
-	lda #<(vh * $10000 + vm * $100 + vl + 806)
+	lda #<(vh * $10000 + vm * $100 + vl + 821)
 	sta PATTERN_POS_L
 	lda #$01 ; first line is 1
 	sta NEXT_LINE_COUNTER
@@ -443,11 +476,11 @@ pattern_3_init:
 	jmp play_next
 
 pattern_4_init:
-	lda #(^(vh * $10000 + vm * $100 + vl + 1074)) + $10
+	lda #(^(vh * $10000 + vm * $100 + vl + 1089)) + $10
 	sta PATTERN_POS_H
-	lda #>(vh * $10000 + vm * $100 + vl + 1074)
+	lda #>(vh * $10000 + vm * $100 + vl + 1089)
 	sta PATTERN_POS_M
-	lda #<(vh * $10000 + vm * $100 + vl + 1074)
+	lda #<(vh * $10000 + vm * $100 + vl + 1089)
 	sta PATTERN_POS_L
 	lda #$01 ; first line is 1
 	sta NEXT_LINE_COUNTER
@@ -459,11 +492,11 @@ pattern_4_init:
 	jmp play_next
 
 pattern_5_init:
-	lda #(^(vh * $10000 + vm * $100 + vl + 1362)) + $10
+	lda #(^(vh * $10000 + vm * $100 + vl + 1377)) + $10
 	sta PATTERN_POS_H
-	lda #>(vh * $10000 + vm * $100 + vl + 1362)
+	lda #>(vh * $10000 + vm * $100 + vl + 1377)
 	sta PATTERN_POS_M
-	lda #<(vh * $10000 + vm * $100 + vl + 1362)
+	lda #<(vh * $10000 + vm * $100 + vl + 1377)
 	sta PATTERN_POS_L
 	lda #$01 ; first line is 1
 	sta NEXT_LINE_COUNTER
@@ -475,11 +508,11 @@ pattern_5_init:
 	jmp play_next
 
 pattern_6_init:
-	lda #(^(vh * $10000 + vm * $100 + vl + 1622)) + $10
+	lda #(^(vh * $10000 + vm * $100 + vl + 1637)) + $10
 	sta PATTERN_POS_H
-	lda #>(vh * $10000 + vm * $100 + vl + 1622)
+	lda #>(vh * $10000 + vm * $100 + vl + 1637)
 	sta PATTERN_POS_M
-	lda #<(vh * $10000 + vm * $100 + vl + 1622)
+	lda #<(vh * $10000 + vm * $100 + vl + 1637)
 	sta PATTERN_POS_L
 	lda #$01 ; first line is 1
 	sta NEXT_LINE_COUNTER
@@ -491,11 +524,11 @@ pattern_6_init:
 	jmp play_next
 
 pattern_7_init:
-	lda #(^(vh * $10000 + vm * $100 + vl + 1926)) + $10
+	lda #(^(vh * $10000 + vm * $100 + vl + 1941)) + $10
 	sta PATTERN_POS_H
-	lda #>(vh * $10000 + vm * $100 + vl + 1926)
+	lda #>(vh * $10000 + vm * $100 + vl + 1941)
 	sta PATTERN_POS_M
-	lda #<(vh * $10000 + vm * $100 + vl + 1926)
+	lda #<(vh * $10000 + vm * $100 + vl + 1941)
 	sta PATTERN_POS_L
 	lda #$01 ; first line is 1
 	sta NEXT_LINE_COUNTER
@@ -507,11 +540,11 @@ pattern_7_init:
 	jmp play_next
 
 pattern_8_init:
-	lda #(^(vh * $10000 + vm * $100 + vl + 2222)) + $10
+	lda #(^(vh * $10000 + vm * $100 + vl + 2237)) + $10
 	sta PATTERN_POS_H
-	lda #>(vh * $10000 + vm * $100 + vl + 2222)
+	lda #>(vh * $10000 + vm * $100 + vl + 2237)
 	sta PATTERN_POS_M
-	lda #<(vh * $10000 + vm * $100 + vl + 2222)
+	lda #<(vh * $10000 + vm * $100 + vl + 2237)
 	sta PATTERN_POS_L
 	lda #$01 ; first line is 1
 	sta NEXT_LINE_COUNTER
@@ -523,11 +556,11 @@ pattern_8_init:
 	jmp play_next
 
 pattern_9_init:
-	lda #(^(vh * $10000 + vm * $100 + vl + 2734)) + $10
+	lda #(^(vh * $10000 + vm * $100 + vl + 2749)) + $10
 	sta PATTERN_POS_H
-	lda #>(vh * $10000 + vm * $100 + vl + 2734)
+	lda #>(vh * $10000 + vm * $100 + vl + 2749)
 	sta PATTERN_POS_M
-	lda #<(vh * $10000 + vm * $100 + vl + 2734)
+	lda #<(vh * $10000 + vm * $100 + vl + 2749)
 	sta PATTERN_POS_L
 	lda #$01 ; first line is 1
 	sta NEXT_LINE_COUNTER
@@ -539,11 +572,11 @@ pattern_9_init:
 	jmp play_next
 
 pattern_10_init:
-	lda #(^(vh * $10000 + vm * $100 + vl + 3246)) + $10
+	lda #(^(vh * $10000 + vm * $100 + vl + 3261)) + $10
 	sta PATTERN_POS_H
-	lda #>(vh * $10000 + vm * $100 + vl + 3246)
+	lda #>(vh * $10000 + vm * $100 + vl + 3261)
 	sta PATTERN_POS_M
-	lda #<(vh * $10000 + vm * $100 + vl + 3246)
+	lda #<(vh * $10000 + vm * $100 + vl + 3261)
 	sta PATTERN_POS_L
 	lda #$01 ; first line is 1
 	sta NEXT_LINE_COUNTER
@@ -555,11 +588,11 @@ pattern_10_init:
 	jmp play_next
 
 pattern_11_init:
-	lda #(^(vh * $10000 + vm * $100 + vl + 3758)) + $10
+	lda #(^(vh * $10000 + vm * $100 + vl + 3773)) + $10
 	sta PATTERN_POS_H
-	lda #>(vh * $10000 + vm * $100 + vl + 3758)
+	lda #>(vh * $10000 + vm * $100 + vl + 3773)
 	sta PATTERN_POS_M
-	lda #<(vh * $10000 + vm * $100 + vl + 3758)
+	lda #<(vh * $10000 + vm * $100 + vl + 3773)
 	sta PATTERN_POS_L
 	lda #$01 ; first line is 1
 	sta NEXT_LINE_COUNTER
@@ -604,6 +637,44 @@ loop:
     dex
     bne loop
 
+    rts
+.endproc
+
+.proc command_pitchshiftdown
+    ; number of shifts
+    ldx INSTRUMENT_COMMAND_PARAM0, y
+
+    lda INSTRUMENT_NUMBER, y
+    tay ; y now is the note number
+loop:
+    clc
+    lda player_slidelookup, y
+    sbc PLAYER_SCRATCH_FREQL
+    sta PLAYER_SCRATCH_FREQL
+    lda player_slidelookup+1, y
+    sbc PLAYER_SCRATCH_FREQH
+    sta PLAYER_SCRATCH_FREQH
+
+    dex
+    bne loop
+
+    rts
+.endproc
+
+.proc command_frequencyslideup
+    ; number of shifts
+    ldx INSTRUMENT_COMMAND_PARAM1, y
+    beq slide_done
+
+slide_done:
+    rts
+.endproc
+
+.proc command_frequencyslidedown
+    rts
+.endproc
+
+.proc command_commandstop
     rts
 .endproc
 
@@ -711,6 +782,9 @@ instruments_play:
 	.word instrument_12
 	.word instrument_13
 	.word $0000
+	.word instrument_15
+	.word instrument_16
+	.word instrument_17
 
 instrument_length:
 	.byte $3E, $08 ; 21 steps, 18 repeat
@@ -728,6 +802,9 @@ instrument_length:
 	.byte $14, $00 ; 7 steps, -1 repeat
 	.byte $08, $08 ; 3 steps, 0 repeat
 	.byte $00, $00
+	.byte $05, $05 ; 2 steps, 0 repeat
+	.byte $05, $00 ; 2 steps, -1 repeat
+	.byte $20, $02 ; 11 steps, 10 repeat
 
 instrument_0:
 	.byte $7F, $C3, $0E; Width 63 + Wave Sawtooth, Volume 3, NoteAdj 7
@@ -926,6 +1003,24 @@ instrument_13:
 	.byte $28, $D0, $00; Width 40 + Wave Pulse, Volume 16, NoteAdj 0
 	.byte $28, $D2, $00; Width 40 + Wave Pulse, Volume 18, NoteAdj 0
 	.byte $28, $D4, $00; Width 40 + Wave Pulse, Volume 20, NoteAdj 0
+instrument_15:
+	.byte $BF, $FF, $00; Width 63 + Wave Triangle, Volume 63, NoteAdj 0
+	.byte $BF, $FF, $00; Width 63 + Wave Triangle, Volume 63, NoteAdj 0
+instrument_16:
+	.byte $BF, $C0, $00; Width 63 + Wave Triangle, Volume 64, NoteAdj 0
+	.byte $BF, $C0, $00; Width 63 + Wave Triangle, Volume 64, NoteAdj 0
+instrument_17:
+	.byte $BF, $C1, $EC; Width 63 + Wave Triangle, Volume 65, NoteAdj -10
+	.byte $BF, $C0, $EE; Width 63 + Wave Triangle, Volume 64, NoteAdj -9
+	.byte $BF, $C0, $F0; Width 63 + Wave Triangle, Volume 64, NoteAdj -8
+	.byte $BF, $C0, $F2; Width 63 + Wave Triangle, Volume 64, NoteAdj -7
+	.byte $BF, $C0, $F4; Width 63 + Wave Triangle, Volume 64, NoteAdj -6
+	.byte $BF, $C0, $F6; Width 63 + Wave Triangle, Volume 64, NoteAdj -5
+	.byte $BF, $C0, $F8; Width 63 + Wave Triangle, Volume 64, NoteAdj -4
+	.byte $BF, $C0, $FA; Width 63 + Wave Triangle, Volume 64, NoteAdj -3
+	.byte $BF, $C0, $FC; Width 63 + Wave Triangle, Volume 64, NoteAdj -2
+	.byte $BF, $C0, $FE; Width 63 + Wave Triangle, Volume 64, NoteAdj -1
+	.byte $BF, $C0, $00; Width 63 + Wave Triangle, Volume 64, NoteAdj 0
 
 pattern_data:
 pattern_0:
@@ -938,7 +1033,15 @@ pattern_0:
 	.byte $8A	; Note 70 (-1*2) A#5 - Vera 04E3
 	.byte $0A	; Instrument 5
 	.byte $00	; No command
-	.byte $02	; steps to next voice
+	.byte $00	; steps to next voice
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0000	;
+	.byte $00	; steps to next voice
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0000	;
+	.byte $00	; steps to next voice
 	.byte $78	; Note 61 (-1*2) C#5 - Vera 02E8
 	.byte $0C	; Instrument 6
 	.byte $00	; No command
@@ -946,6 +1049,10 @@ pattern_0:
 	.byte $80	; Note 65 (-1*2) F-5 - Vera 03A9
 	.byte $0C	; Instrument 6
 	.byte $00	; No command
+	.byte $00	; steps to next voice
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0000	;
 	.byte $ff	; no more for this line.
 	.byte $01	; next line count
 
@@ -1197,7 +1304,7 @@ pattern_0:
 	.byte $00	; No command
 	.byte $ff	; no more for this line.
 	.byte $ff	; pattern done.
-; -- size: 244 bytes.
+; -- size: 259 bytes.
 pattern_1:
 
 	.byte $00	; first voice is 0
@@ -4972,11 +5079,19 @@ pattern_10:
 ; -- size: 512 bytes.
 pattern_11:
 
-	.byte $01	; first voice is 1
+	.byte $00	; first voice is 0
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0000	;
+	.byte $00	; steps to next voice
 	.byte $72	; Note 58 (-1*2) A#4 - Vera 0271
 	.byte $0A	; Instrument 5
 	.byte $00	; No command
-	.byte $01	; steps to next voice
+	.byte $00	; steps to next voice
+	.byte $46	; Note 36 (-1*2) C-3 - Vera 00AF
+	.byte $20	; Instrument 16
+	.byte $00	; No command
+	.byte $00	; steps to next voice
 	.byte $DA	; Note 110 (-1*2) D-9 - Vera 3144
 	.byte $18	; Instrument 12
 	.byte $00	; No command
@@ -4994,7 +5109,19 @@ pattern_11:
 	.byte $00	; Instrument 0
 	.byte $00	; No command
 	.byte $ff	; no more for this line.
-	.byte $02	; next line count
+	.byte $01	; next line count
+
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $42	; Note 34 (-1*2) A#2 - Vera 009C
+	.byte $1E	; Instrument 15
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $ff	; no more for this line.
+	.byte $01	; next line count
 
 	.byte $01	; first voice is 1
 	.byte $72	; Note 58 (-1*2) A#4 - Vera 0271
@@ -5011,7 +5138,15 @@ pattern_11:
 	.byte $ff	; no more for this line.
 	.byte $01	; next line count
 
-	.byte $04	; first voice is 4
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $01	; steps to next voice
 	.byte $00	; Note 1 (-1*2) --- - Vera 0000
 	.byte $02	; Silence
 	.word $0004	;
@@ -5044,15 +5179,26 @@ pattern_11:
 	.byte $06	; PitchShiftUp
 	.word $0001	;
 	.byte $ff	; no more for this line.
-	.byte $02	; next line count
+	.byte $01	; next line count
+
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $ff	; no more for this line.
+	.byte $01	; next line count
 
 	.byte $01	; first voice is 1
 	.byte $8A	; Note 70 (-1*2) A#5 - Vera 04E3
 	.byte $0A	; Instrument 5
 	.byte $00	; No command
 	.byte $00	; steps to next voice
-	.byte $42	; Note 34 (-1*2) A#2 - Vera 009C
-	.byte $10	; Instrument 8
+	.byte $52	; Note 42 (-1*2) F#3 - Vera 00F8
+	.byte $22	; Instrument 17
 	.byte $00	; No command
 	.byte $00	; steps to next voice
 	.byte $DA	; Note 110 (-1*2) D-9 - Vera 3144
@@ -5068,7 +5214,19 @@ pattern_11:
 	.byte $06	; PitchShiftUp
 	.word $0001	;
 	.byte $ff	; no more for this line.
-	.byte $02	; next line count
+	.byte $01	; next line count
+
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $42	; Note 34 (-1*2) A#2 - Vera 009C
+	.byte $1E	; Instrument 15
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $ff	; no more for this line.
+	.byte $01	; next line count
 
 	.byte $01	; first voice is 1
 	.byte $72	; Note 58 (-1*2) A#4 - Vera 0271
@@ -5092,7 +5250,14 @@ pattern_11:
 	.byte $06	; PitchShiftUp
 	.word $0001	;
 	.byte $ff	; no more for this line.
-	.byte $02	; next line count
+	.byte $01	; next line count
+
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $ff	; no more for this line.
+	.byte $01	; next line count
 
 	.byte $01	; first voice is 1
 	.byte $80	; Note 65 (-1*2) F-5 - Vera 03A9
@@ -5112,15 +5277,26 @@ pattern_11:
 	.byte $06	; PitchShiftUp
 	.word $0001	;
 	.byte $ff	; no more for this line.
-	.byte $02	; next line count
+	.byte $01	; next line count
+
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $ff	; no more for this line.
+	.byte $01	; next line count
 
 	.byte $01	; first voice is 1
 	.byte $82	; Note 66 (-1*2) F#5 - Vera 03E1
 	.byte $0A	; Instrument 5
 	.byte $00	; No command
 	.byte $00	; steps to next voice
-	.byte $52	; Note 42 (-1*2) F#3 - Vera 00F8
-	.byte $10	; Instrument 8
+	.byte $46	; Note 36 (-1*2) C-3 - Vera 00AF
+	.byte $20	; Instrument 16
 	.byte $00	; No command
 	.byte $00	; steps to next voice
 	.byte $DA	; Note 110 (-1*2) D-9 - Vera 3144
@@ -5140,24 +5316,55 @@ pattern_11:
 	.byte $02	; Instrument 1
 	.byte $00	; No command
 	.byte $ff	; no more for this line.
-	.byte $02	; next line count
+	.byte $01	; next line count
+
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $52	; Note 42 (-1*2) F#3 - Vera 00F8
+	.byte $10	; Instrument 8
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $ff	; no more for this line.
+	.byte $01	; next line count
 
 	.byte $01	; first voice is 1
 	.byte $6A	; Note 54 (-1*2) F#4 - Vera 01F0
 	.byte $0A	; Instrument 5
 	.byte $00	; No command
-	.byte $01	; steps to next voice
+	.byte $00	; steps to next voice
+	.byte $52	; Note 42 (-1*2) F#3 - Vera 00F8
+	.byte $1E	; Instrument 15
+	.byte $00	; No command
+	.byte $00	; steps to next voice
 	.byte $DA	; Note 110 (-1*2) D-9 - Vera 3144
 	.byte $14	; Instrument 10
 	.byte $00	; No command
 	.byte $ff	; no more for this line.
-	.byte $02	; next line count
+	.byte $01	; next line count
+
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $ff	; no more for this line.
+	.byte $01	; next line count
 
 	.byte $01	; first voice is 1
 	.byte $82	; Note 66 (-1*2) F#5 - Vera 03E1
 	.byte $0A	; Instrument 5
 	.byte $00	; No command
-	.byte $01	; steps to next voice
+	.byte $00	; steps to next voice
+	.byte $46	; Note 36 (-1*2) C-3 - Vera 00AF
+	.byte $20	; Instrument 16
+	.byte $00	; No command
+	.byte $00	; steps to next voice
 	.byte $DA	; Note 110 (-1*2) D-9 - Vera 3144
 	.byte $18	; Instrument 12
 	.byte $00	; No command
@@ -5171,18 +5378,46 @@ pattern_11:
 	.byte $06	; PitchShiftUp
 	.word $0001	;
 	.byte $ff	; no more for this line.
-	.byte $02	; next line count
+	.byte $01	; next line count
+
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $3A	; Note 30 (-1*2) F#2 - Vera 007C
+	.byte $1E	; Instrument 15
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $ff	; no more for this line.
+	.byte $01	; next line count
 
 	.byte $01	; first voice is 1
 	.byte $6A	; Note 54 (-1*2) F#4 - Vera 01F0
 	.byte $0A	; Instrument 5
 	.byte $00	; No command
-	.byte $01	; steps to next voice
+	.byte $00	; steps to next voice
+	.byte $52	; Note 42 (-1*2) F#3 - Vera 00F8
+	.byte $22	; Instrument 17
+	.byte $00	; No command
+	.byte $00	; steps to next voice
 	.byte $DA	; Note 110 (-1*2) D-9 - Vera 3144
 	.byte $16	; Instrument 11
 	.byte $00	; No command
 	.byte $ff	; no more for this line.
-	.byte $02	; next line count
+	.byte $01	; next line count
+
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $3A	; Note 30 (-1*2) F#2 - Vera 007C
+	.byte $1E	; Instrument 15
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $ff	; no more for this line.
+	.byte $01	; next line count
 
 	.byte $01	; first voice is 1
 	.byte $82	; Note 66 (-1*2) F#5 - Vera 03E1
@@ -5206,7 +5441,18 @@ pattern_11:
 	.byte $06	; PitchShiftUp
 	.word $0001	;
 	.byte $ff	; no more for this line.
-	.byte $02	; next line count
+	.byte $01	; next line count
+
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $ff	; no more for this line.
+	.byte $01	; next line count
 
 	.byte $01	; first voice is 1
 	.byte $6A	; Note 54 (-1*2) F#4 - Vera 01F0
@@ -5232,7 +5478,15 @@ pattern_11:
 	.byte $ff	; no more for this line.
 	.byte $01	; next line count
 
-	.byte $04	; first voice is 4
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $01	; steps to next voice
 	.byte $00	; Note 1 (-1*2) --- - Vera 0000
 	.byte $02	; Silence
 	.word $0004	;
@@ -5247,7 +5501,11 @@ pattern_11:
 	.byte $6E	; Note 56 (-1*2) G#4 - Vera 022D
 	.byte $0A	; Instrument 5
 	.byte $00	; No command
-	.byte $01	; steps to next voice
+	.byte $00	; steps to next voice
+	.byte $46	; Note 36 (-1*2) C-3 - Vera 00AF
+	.byte $20	; Instrument 16
+	.byte $00	; No command
+	.byte $00	; steps to next voice
 	.byte $DA	; Note 110 (-1*2) D-9 - Vera 3144
 	.byte $18	; Instrument 12
 	.byte $00	; No command
@@ -5267,7 +5525,16 @@ pattern_11:
 	.byte $ff	; no more for this line.
 	.byte $01	; next line count
 
-	.byte $04	; first voice is 4
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $56	; Note 44 (-1*2) G#3 - Vera 0116
+	.byte $1E	; Instrument 15
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $01	; steps to next voice
 	.byte $00	; Note 1 (-1*2) --- - Vera 0000
 	.byte $02	; Silence
 	.word $0004	;
@@ -5302,7 +5569,15 @@ pattern_11:
 	.byte $ff	; no more for this line.
 	.byte $01	; next line count
 
-	.byte $04	; first voice is 4
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $01	; steps to next voice
 	.byte $00	; Note 1 (-1*2) --- - Vera 0000
 	.byte $02	; Silence
 	.word $0004	;
@@ -5337,7 +5612,15 @@ pattern_11:
 	.byte $ff	; no more for this line.
 	.byte $01	; next line count
 
-	.byte $04	; first voice is 4
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $01	; steps to next voice
 	.byte $00	; Note 1 (-1*2) --- - Vera 0000
 	.byte $02	; Silence
 	.word $0004	;
@@ -5352,7 +5635,11 @@ pattern_11:
 	.byte $86	; Note 68 (-1*2) G#5 - Vera 045A
 	.byte $0A	; Instrument 5
 	.byte $00	; No command
-	.byte $01	; steps to next voice
+	.byte $00	; steps to next voice
+	.byte $52	; Note 42 (-1*2) F#3 - Vera 00F8
+	.byte $22	; Instrument 17
+	.byte $00	; No command
+	.byte $00	; steps to next voice
 	.byte $DA	; Note 110 (-1*2) D-9 - Vera 3144
 	.byte $16	; Instrument 11
 	.byte $00	; No command
@@ -5366,7 +5653,19 @@ pattern_11:
 	.byte $06	; PitchShiftUp
 	.word $0001	;
 	.byte $ff	; no more for this line.
-	.byte $02	; next line count
+	.byte $01	; next line count
+
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $3E	; Note 32 (-1*2) G#2 - Vera 008B
+	.byte $1E	; Instrument 15
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $ff	; no more for this line.
+	.byte $01	; next line count
 
 	.byte $01	; first voice is 1
 	.byte $6E	; Note 56 (-1*2) G#4 - Vera 022D
@@ -5390,13 +5689,28 @@ pattern_11:
 	.byte $06	; PitchShiftUp
 	.word $0001	;
 	.byte $ff	; no more for this line.
-	.byte $02	; next line count
+	.byte $01	; next line count
+
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $ff	; no more for this line.
+	.byte $01	; next line count
 
 	.byte $01	; first voice is 1
 	.byte $86	; Note 68 (-1*2) G#5 - Vera 045A
 	.byte $0A	; Instrument 5
 	.byte $00	; No command
-	.byte $01	; steps to next voice
+	.byte $00	; steps to next voice
+	.byte $56	; Note 44 (-1*2) G#3 - Vera 0116
+	.byte $10	; Instrument 8
+	.byte $00	; No command
+	.byte $00	; steps to next voice
 	.byte $DA	; Note 110 (-1*2) D-9 - Vera 3144
 	.byte $12	; Instrument 9
 	.byte $00	; No command
@@ -5410,13 +5724,28 @@ pattern_11:
 	.byte $06	; PitchShiftUp
 	.word $0001	;
 	.byte $ff	; no more for this line.
-	.byte $02	; next line count
+	.byte $01	; next line count
+
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $ff	; no more for this line.
+	.byte $01	; next line count
 
 	.byte $01	; first voice is 1
 	.byte $7C	; Note 63 (-1*2) D#5 - Vera 0343
 	.byte $0A	; Instrument 5
 	.byte $00	; No command
-	.byte $01	; steps to next voice
+	.byte $00	; steps to next voice
+	.byte $46	; Note 36 (-1*2) C-3 - Vera 00AF
+	.byte $20	; Instrument 16
+	.byte $00	; No command
+	.byte $00	; steps to next voice
 	.byte $DA	; Note 110 (-1*2) D-9 - Vera 3144
 	.byte $18	; Instrument 12
 	.byte $00	; No command
@@ -5434,7 +5763,19 @@ pattern_11:
 	.byte $06	; Instrument 3
 	.byte $00	; No command
 	.byte $ff	; no more for this line.
-	.byte $02	; next line count
+	.byte $01	; next line count
+
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $4C	; Note 39 (-1*2) D#3 - Vera 00D0
+	.byte $1E	; Instrument 15
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $ff	; no more for this line.
+	.byte $01	; next line count
 
 	.byte $01	; first voice is 1
 	.byte $7C	; Note 63 (-1*2) D#5 - Vera 0343
@@ -5449,20 +5790,44 @@ pattern_11:
 	.byte $14	; Instrument 10
 	.byte $00	; No command
 	.byte $ff	; no more for this line.
-	.byte $02	; next line count
+	.byte $01	; next line count
+
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $ff	; no more for this line.
+	.byte $01	; next line count
 
 	.byte $01	; first voice is 1
 	.byte $64	; Note 51 (-1*2) D#4 - Vera 01A1
 	.byte $0A	; Instrument 5
 	.byte $00	; No command
-	.byte $01	; steps to next voice
+	.byte $00	; steps to next voice
+	.byte $46	; Note 36 (-1*2) C-3 - Vera 00AF
+	.byte $20	; Instrument 16
+	.byte $00	; No command
+	.byte $00	; steps to next voice
 	.byte $DA	; Note 110 (-1*2) D-9 - Vera 3144
 	.byte $18	; Instrument 12
 	.byte $00	; No command
 	.byte $ff	; no more for this line.
 	.byte $01	; next line count
 
-	.byte $04	; first voice is 4
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $34	; Note 27 (-1*2) D#2 - Vera 0068
+	.byte $1E	; Instrument 15
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $01	; steps to next voice
 	.byte $82	; Note 66 (-1*2) F#5 - Vera 03E1
 	.byte $1A	; Instrument 13
 	.byte $00	; No command
@@ -5478,7 +5843,11 @@ pattern_11:
 	.byte $7C	; Note 63 (-1*2) D#5 - Vera 0343
 	.byte $0A	; Instrument 5
 	.byte $00	; No command
-	.byte $01	; steps to next voice
+	.byte $00	; steps to next voice
+	.byte $52	; Note 42 (-1*2) F#3 - Vera 00F8
+	.byte $22	; Instrument 17
+	.byte $00	; No command
+	.byte $00	; steps to next voice
 	.byte $DA	; Note 110 (-1*2) D-9 - Vera 3144
 	.byte $16	; Instrument 11
 	.byte $00	; No command
@@ -5492,13 +5861,29 @@ pattern_11:
 	.byte $06	; PitchShiftUp
 	.word $0001	;
 	.byte $ff	; no more for this line.
-	.byte $02	; next line count
+	.byte $01	; next line count
+
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $4C	; Note 39 (-1*2) D#3 - Vera 00D0
+	.byte $1E	; Instrument 15
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $ff	; no more for this line.
+	.byte $01	; next line count
 
 	.byte $01	; first voice is 1
 	.byte $64	; Note 51 (-1*2) D#4 - Vera 01A1
 	.byte $0A	; Instrument 5
 	.byte $00	; No command
-	.byte $01	; steps to next voice
+	.byte $00	; steps to next voice
+	.byte $46	; Note 36 (-1*2) C-3 - Vera 00AF
+	.byte $20	; Instrument 16
+	.byte $00	; No command
+	.byte $00	; steps to next voice
 	.byte $DA	; Note 110 (-1*2) D-9 - Vera 3144
 	.byte $18	; Instrument 12
 	.byte $00	; No command
@@ -5512,13 +5897,29 @@ pattern_11:
 	.byte $06	; PitchShiftUp
 	.word $0001	;
 	.byte $ff	; no more for this line.
-	.byte $02	; next line count
+	.byte $01	; next line count
+
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $3A	; Note 30 (-1*2) F#2 - Vera 007C
+	.byte $1E	; Instrument 15
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $ff	; no more for this line.
+	.byte $01	; next line count
 
 	.byte $01	; first voice is 1
 	.byte $7C	; Note 63 (-1*2) D#5 - Vera 0343
 	.byte $0A	; Instrument 5
 	.byte $00	; No command
-	.byte $01	; steps to next voice
+	.byte $00	; steps to next voice
+	.byte $5A	; Note 46 (-1*2) A#3 - Vera 0138
+	.byte $22	; Instrument 17
+	.byte $00	; No command
+	.byte $00	; steps to next voice
 	.byte $DA	; Note 110 (-1*2) D-9 - Vera 3144
 	.byte $16	; Instrument 11
 	.byte $00	; No command
@@ -5531,10 +5932,22 @@ pattern_11:
 	.byte $1A	; Instrument 13
 	.byte $06	; PitchShiftUp
 	.word $0001	;
+	.byte $ff	; no more for this line.
+	.byte $01	; next line count
+
+	.byte $01	; first voice is 1
+	.byte $00	; Note 1 (-1*2) --- - Vera 0000
+	.byte $02	; Silence
+	.word $0004	;
+	.byte $00	; steps to next voice
+	.byte $4C	; Note 39 (-1*2) D#3 - Vera 00D0
+	.byte $1E	; Instrument 15
+	.byte $02	; Silence
+	.word $0004	;
 	.byte $ff	; no more for this line.
 	.byte $ff	; pattern done.
-; -- size: 562 bytes.
-; -- total size: 4320 bytes.
+; -- size: 898 bytes.
+; -- total size: 4671 bytes.
 
 pattern_playlist:
 	.byte $0A

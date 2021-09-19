@@ -26,7 +26,9 @@ namespace WinPlayer.Command
         SlideDownToNote,
         PitchShiftUp,
         PitchShiftDown,
-        Silence
+        Silence,
+        FrequencySlideUp,
+        FrequencySlideDown
     }
 
     public static class CommandFactory
@@ -35,15 +37,18 @@ namespace WinPlayer.Command
         {
             ICommand toReturn = effect switch
             {
-                Commands.FrequencySlide => new FrequencySlide(),
+                Commands.FrequencySlide => new Clear(),
                 //Commands.Warble => new Warble(),
-                Commands.ClearCommand => new NoEffect(),
+                Commands.ClearCommand => new Clear(),
                 //Commands.NoteSlide => new NoteSlide(),
                 Commands.SlideUpToNote => new SlideUpToNote(),
                 Commands.SlideDownToNote => new SlideDownToNote(),
                 Commands.PitchShiftUp => new PitchShiftUp(),
+                Commands.PitchShiftDown => new PitchShiftDown(),
                 Commands.Silence => new Silence(),
-                _ => new NoEffect()
+                Commands.FrequencySlideUp => new FrequencySlideUp(),
+                Commands.FrequencySlideDown => new FrequencySlideDown(),
+                _ => new Clear()
             };
 
             toReturn.Parameters = parameter;
@@ -54,13 +59,16 @@ namespace WinPlayer.Command
         public static string GetDisplay(Commands effect) => effect switch
         {
             Commands.None => "",
-            Commands.FrequencySlide => "Fq Sl",
             //Commands.Warble => "Warble",
             //Commands.NoteSlide => "Nte Sl",
+            Commands.ClearCommand => "Clear",
             Commands.SlideUpToNote => "Sl Nte Up",
             Commands.SlideDownToNote => "Sl Nte Dn",
             Commands.PitchShiftUp => "Pch Sh Up",
+            Commands.PitchShiftDown => "Pch Sh Dn",
             Commands.Silence => "Silence",
+            Commands.FrequencySlideUp => "Freq Sl Up",
+            Commands.FrequencySlideDown => "Freq Sl Dn",
             _ => "??"
         };
     }

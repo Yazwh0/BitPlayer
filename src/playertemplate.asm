@@ -22,7 +22,7 @@
 .scope
 
 ; need to run this maco to define where to keep the data.
-.macro Player_Variables frameIndex, lineIndex, patternIndex, nextLineCounter, vhPos, vmPos, vlPos, instrumentDataZP, instrumentCommandData, instrumentPosition, instrumentNumber, playerScratch
+.macro Player_Variables frameIndex, lineIndex, patternIndex, nextLineCounter, vhPos, vmPos, vlPos, instrumentDataZP, instrumentCommandData, instrumentPosition, instrumentNumber, playerScratch, commandVariables
 ; Memory locations for variables
 FRAME_INDEX = frameIndex
 LINE_INDEX = lineIndex
@@ -65,6 +65,9 @@ PLAYER_SCRATCH_FREQL = PLAYER_SCRATCH
 PLAYER_SCRATCH_FREQH = PLAYER_SCRATCH + 1
 PLAYER_SCRATCH_VOLUME = PLAYER_SCRATCH + 2
 PLAYER_SCRATCH_WIDTH = PLAYER_SCRATCH + 3
+
+COMMAND_VARIABLES0 = commandVariables
+COMMAND_VARIABLES1 = COMMAND_VARIABLES0 + 1
 
 .endmacro
 
@@ -113,7 +116,7 @@ clear_psg_loop:
     rts
 .endmacro
 
-.macro Play_Instrument offset, hasCommands
+.macro Play_Instrument offset
     .local instrument_not_playing
     .local instrument_done
     .local instrument_played
@@ -227,6 +230,7 @@ instrument_done:
     .local pattern_jump_table
     .local restart
     .local no_note_change
+    .local instrument_copy_loop
 
 	dec FRAME_INDEX
 	bne play_instruments  
@@ -243,13 +247,42 @@ play_instruments:
     sta ADDRx_L
 
 .repeat ###PatternWidth, I
-Play_Instrument I, 1
+Play_Instrument I
 .endrepeat
 
+; if there are less than 8 tracks, double up for better volume.
+.if ###PatternWidth <= 8
+
+    lda #1
+    sta CTRL
+
+    ; PSG start
+    lda #$11
+    sta ADDRx_L
+    lda #$f9
+    sta ADDRx_M
+    lda #$c0
+    sta ADDRx_L
+
+    stz CTRL
+
+    ldx ####PatternWidth + 1
+instrument_copy_loop:
+    lda DATA1
+    sta DATA0
+    lda DATA1
+    sta DATA0
+    lda DATA1
+    sta DATA0
+    lda DATA1
+    sta DATA0
+
+    dex
+    bne instrument_copy_loop
+
+.endif
+
     rts
-
-; commands
-
 
 next_line: ; !label is important!
     lda #$ff ; Tempo - gets modified in new pattern init
@@ -397,6 +430,44 @@ loop:
     dex
     bne loop
 
+    rts
+.endproc
+
+.proc command_pitchshiftdown
+    ; number of shifts
+    ldx INSTRUMENT_COMMAND_PARAM0, y
+
+    lda INSTRUMENT_NUMBER, y
+    tay ; y now is the note number
+loop:
+    clc
+    lda player_slidelookup, y
+    sbc PLAYER_SCRATCH_FREQL
+    sta PLAYER_SCRATCH_FREQL
+    lda player_slidelookup+1, y
+    sbc PLAYER_SCRATCH_FREQH
+    sta PLAYER_SCRATCH_FREQH
+
+    dex
+    bne loop
+
+    rts
+.endproc
+
+.proc command_frequencyslideup
+    ; number of shifts
+    ldx INSTRUMENT_COMMAND_PARAM1, y
+    beq slide_done
+
+slide_done:
+    rts
+.endproc
+
+.proc command_frequencyslidedown
+    rts
+.endproc
+
+.proc command_commandstop
     rts
 .endproc
 

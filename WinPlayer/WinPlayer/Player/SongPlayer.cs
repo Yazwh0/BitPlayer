@@ -55,7 +55,7 @@ namespace WinPlayer.Player
                 if (_currentPattern.Tracks[i] == null)
                     _currentPattern.Tracks[i] = new Models.Track();
 
-                _effects[i] = new NoEffect();
+                _effects[i] = new Clear();
                 _currentNotes[i] = _currentPattern.Tracks[i].Notes[_lineIndex];
                 _currentInstruments[i] = _song.Instruments.FirstOrDefault(x => x.InstrumentNumber == _currentNotes[i].InstrumentNumber && _currentNotes[i].NoteNum != 0);
                 _currentWaveFormGenerators[i] = VeraWaveform.GetGenerator(_currentInstruments[i]?.WaveType ?? Models.WaveType.None);

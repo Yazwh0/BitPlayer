@@ -16,7 +16,7 @@ pINSTRUMENT_NUMBER = $80 ; 2 * 16
 pPLAYER_SCRATCH = $20
 
 .scope
-Player_Variables pFRAME_INDEX, pLINE_INDEX, pPATTERN_INDEX, pNEXT_LINE_COUNTER, pMOD_VH, pMOD_VM, pMOD_VL, pINSTRUMENT_DATA_ZP, pINSTRUMENT_COMMAND, pINSTRUMENT_POSITION, pINSTRUMENT_NUMBER, pPLAYER_SCRATCH
+Player_Variables pFRAME_INDEX, pLINE_INDEX, pPATTERN_INDEX, pNEXT_LINE_COUNTER, pMOD_VH, pMOD_VM, pMOD_VL, pINSTRUMENT_DATA_ZP, pINSTRUMENT_COMMAND, pINSTRUMENT_POSITION, pINSTRUMENT_NUMBER, pPLAYER_SCRATCH, pCOMMAND_VARIABLES
 
 .proc player_init
 Player_Initialise $01, $00, $00 ; where in vram the pattern data is
@@ -28,6 +28,9 @@ Player_Vsync $01, $00, $00 ; where in vram the pattern data is
 
 ;.segment DATA
 Player_Data
+
+pCOMMAND_VARIABLES:
+.res $0f, $00 
 
 .segment "DATA256"
 Player_NoteLookup

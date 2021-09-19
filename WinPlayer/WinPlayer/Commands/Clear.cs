@@ -7,16 +7,12 @@ using WinPlayer.Waveform;
 
 namespace WinPlayer.Command
 {
-    public class NoEffect : ICommand
+    public class Clear : ICommand
     {
         public Models.Note? Note { get; set; }
         public short Parameters { get ; set ; }
 
         public void ApplyNext(IVeraWaveform generator)
-        {
-        }
-
-        public void Remove(IVeraWaveform generator)
         {
         }
     }
