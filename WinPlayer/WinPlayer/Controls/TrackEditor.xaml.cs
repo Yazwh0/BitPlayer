@@ -30,20 +30,21 @@ namespace WinPlayer.Controls
     /// </summary>
     public partial class TrackEditor : UserControl
     {
-        private Models.Note[]? _value = null;
+        private Models.Track? _value;
+        private bool _editing = false;
+      //  private Models.Note[]? _value = null;
 
         public event EventHandler<TrackEditorNoteChangedEventArgs>? NoteChanged = null;
 
         private bool _fireEvents = true;
 
-
-        public Models.Note[]? Value
+        public Models.Track? Value
         {
             get => _value; 
             set
             {
                 Notes.ItemsSource = null;
-                Notes.ItemsSource = value;
+                Notes.ItemsSource = value.Notes;
                 _value = value;
             }
         }
@@ -56,6 +57,9 @@ namespace WinPlayer.Controls
 
         private void Notes_KeyDown(object sender, KeyEventArgs e)
         {
+            if (_editing)
+                return;
+
             if (e.Key == Key.Delete || e.Key == Key.Back) 
             {
 /*                var note = (Models.Note)Notes.SelectedItem;
@@ -72,7 +76,7 @@ namespace WinPlayer.Controls
             {
                 _fireEvents = false;
                 var i = Notes.SelectedIndex;
-                if (i < _value.Length) i++;
+                if (i < _value.Notes.Length) i++;
                 Notes.SelectedIndex = i;
                 e.Handled = true;
                 _fireEvents = true;
@@ -99,15 +103,15 @@ namespace WinPlayer.Controls
                 
                 if (_value == null) throw new Exception();
 
-                var temp = _value.ToList();
+                var temp = _value.Notes.ToList();
 
                 temp.Insert(i, new Models.Note());
                 temp.RemoveAt(temp.Count-1);
 
-                for(var j = 0; j < _value.Length; j++)
+                for(var j = 0; j < _value.Notes.Length; j++)
                 {
-                    _value[j] = temp[j];
-                    _value[j].Position = j;
+                    _value.Notes[j] = temp[j];
+                    _value.Notes[j].Position = j;
                 }
                 Notes.Items.Refresh();
                 e.Handled = true;
@@ -122,15 +126,15 @@ namespace WinPlayer.Controls
 
                 if (_value == null) throw new Exception();
 
-                var temp = _value.ToList();
+                var temp = _value.Notes.ToList();
 
                 temp.RemoveAt(i);
                 temp.Add(new Models.Note());
 
-                for (var j = 0; j < _value.Length; j++)
+                for (var j = 0; j < _value.Notes.Length; j++)
                 {
-                    _value[j] = temp[j];
-                    _value[j].Position = j;
+                    _value.Notes[j] = temp[j];
+                    _value.Notes[j].Position = j;
                 }
 
                 Notes.Items.Refresh();
@@ -151,7 +155,7 @@ namespace WinPlayer.Controls
             if (e.Key == Key.S)
             {
                 var i = Notes.SelectedIndex;
-                var note = _value[i].Clone();
+                var note = _value.Notes[i].Clone();
                 note.NoteNum = 1;
                 NoteChange(note);
 
@@ -182,16 +186,20 @@ namespace WinPlayer.Controls
 
         public void NoteChange(Models.Note note)
         {
+            if (_editing)
+                return;
+
             if (_value == null)
                 throw new Exception();
 
             _fireEvents = false;
             var i = Notes.SelectedIndex;
-            _value[i] = note.Clone();
-            _value[i].Position = i;
+            _value.Notes[i] = note.Clone();
+            _value.Notes[i].Position = i;
+
             Notes.Items.Refresh();
           
-            if (i < _value.Length-1) i++;
+            if (i < _value.Notes.Length-1) i++;
 
             Notes.SelectedIndex = i;
 
@@ -199,6 +207,34 @@ namespace WinPlayer.Controls
             Notes.ScrollIntoView(Notes.Items[i]);
             Notes.Focus();
             _fireEvents = true;
+        }
+
+        public void Refresh()
+        {
+            Notes.ItemsSource = null;
+            Notes.ItemsSource = Value.Notes;
+        }
+
+        private void Notes_BeginningEdit(object sender, DataGridBeginningEditEventArgs e)
+        {
+            _editing = true;
+        }
+
+        private void Notes_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
+        {
+            _editing = false;
+        }
+
+        private void Notes_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            var item = Notes.SelectedItem as Models.Note;
+
+            if (item == null)
+                return;
+
+            var args = new TrackEditorNoteChangedEventArgs(item);
+
+            NoteChanged?.Invoke(this, args);
         }
     }
 }

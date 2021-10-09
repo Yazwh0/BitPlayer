@@ -31,7 +31,10 @@ namespace WinPlayer.Exporters
             NoteNumLookup,
             NoteSlideLookup,
             CommandJumpTable,
-            HasCommands
+            HasCommands,
+            NoteSlideLow,
+            NoteSlideMid,
+            NoteSlideHigh
         }
 
         public async Task Export(Song song, string filename)
@@ -56,6 +59,13 @@ namespace WinPlayer.Exporters
             var noteSlideLookupSb = new StringBuilder();
             output.Add(CodeParts.NoteSlideLookup, noteSlideLookupSb);
 
+            var noteSlideLowSb = new StringBuilder();
+            output.Add(CodeParts.NoteSlideLow, noteSlideLowSb);
+            var noteSlideMidSb = new StringBuilder();
+            output.Add(CodeParts.NoteSlideMid, noteSlideMidSb);
+            var noteSlideHighSb = new StringBuilder();
+            output.Add(CodeParts.NoteSlideHigh, noteSlideHighSb);
+
             // starts at 21
             for (var i = 1; i <= 128; i++)
             {
@@ -70,10 +80,16 @@ namespace WinPlayer.Exporters
                 if (i < 22)
                 {
                     noteSlideLookupSb.AppendLine($"\t.word $0000");
+                    noteSlideLowSb.AppendLine($"\t.word $0000");
+                    noteSlideMidSb.AppendLine($"\t.word $0000");
+                    noteSlideHighSb.AppendLine($"\t.word $0000");
                 }
                 else
                 {
                     noteSlideLookupSb.AppendLine($"\t.word ${FrequencyLookup.FrequencyToVera(FrequencyLookup.FrequencySlide(i)):X4}");
+                    noteSlideLowSb.AppendLine($"\t.word ${FrequencyLookup.FrequencyToVera(FrequencyLookup.FrequencyStep(i, 1)):X4}");
+                    noteSlideMidSb.AppendLine($"\t.word ${FrequencyLookup.FrequencyToVera(FrequencyLookup.FrequencyStep(i, 2)):X4}");
+                    noteSlideHighSb.AppendLine($"\t.word ${FrequencyLookup.FrequencyToVera(FrequencyLookup.FrequencyStep(i, 3)):X4}");
                 }
             }
         }
@@ -154,7 +170,7 @@ namespace WinPlayer.Exporters
                 {
                     foreach(var n in t.Notes)
                     {
-                        if (n.Command != Command.Commands.None && n.NoteNum != 0)
+                        if (n.Command != Command.Commands.None)
                         {
                             if (!commandsUsed.ContainsKey(n.Command))
                             {
@@ -228,10 +244,17 @@ namespace WinPlayer.Exporters
                                 patternSize++;
                             }
 
-                            patternsSb.AppendLine($"\t.byte ${(note.NoteNum - 1)* 2:X2}\t; Note {note.NoteNum} (-1*2) {note.NoteStr} - Vera {FrequencyLookup.FrequencyToVera(FrequencyLookup.Lookup(note.NoteNum).Frequency):X4}");
+                            if (note.NoteNum < 1)
+                            {
+                                patternsSb.AppendLine("\t.byte $00\t; no note");
+                            }
+                            else
+                            {
+                                patternsSb.AppendLine($"\t.byte ${(note.NoteNum - 1) * 2:X2}\t; Note {note.NoteNum} (-1*2) {note.NoteStr} - Vera {FrequencyLookup.FrequencyToVera(FrequencyLookup.Lookup(note.NoteNum).Frequency):X4}");
+                            }
                             patternSize += 1;
 
-                            if (note.NoteNum != 1)
+                            if (note.NoteNum > 1)
                             {
                                 patternsSb.AppendLine($"\t.byte ${note.InstrumentNumber * 2:X2}\t; Instrument {note.InstrumentNumber}");
                                 patternSize += 1;
@@ -374,7 +397,7 @@ namespace WinPlayer.Exporters
                 {
                     var adj = (part.NoteAdjust * 2).ToString("X2");
                     adj = adj.Substring(adj.Length - 2, 2);
-                    instrumentsSb.AppendLine($"\t.byte ${(((int)instrument.WaveType - 1) << 6) + Math.Min(63, part.Width):X2}, ${part.Volume | 0b1100_0000:X2}, ${adj}; Width {part.Width} + Wave {instrument.WaveType}, Volume {part.Volume}, NoteAdj {part.NoteAdjust}");
+                    instrumentsSb.AppendLine($"\t.byte ${(((int)instrument.WaveType - 1) << 6) + Math.Max(63, part.Width):X2}, ${part.Volume | 0b1100_0000:X2}, ${adj}; Width {part.Width} + Wave {instrument.WaveType}, Volume {part.Volume}, NoteAdj {part.NoteAdjust}");
                 }
 
                 instrumentInitSb.AppendLine($"instrument_{instrument.InstrumentNumber}_init:");

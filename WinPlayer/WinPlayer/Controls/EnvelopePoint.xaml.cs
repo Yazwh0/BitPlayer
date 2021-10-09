@@ -37,11 +37,15 @@ namespace WinPlayer.Controls
         private void Volume_TextChanged(object sender, TextChangedEventArgs e)
         {
             int.TryParse(Volume.Text, out _volume);
+            _volume = Math.Min(63, _volume);
+            _volume = Math.Max(0, _volume);
         }
 
         private void Width_TextChanged(object sender, TextChangedEventArgs e)
         {
             int.TryParse(Width.Text, out _width);
+            _width = Math.Min(63, _width);
+            _width = Math.Max(0, _width);
         }
 
         public (int Time, int Volume, int Width) Value

@@ -220,7 +220,7 @@ namespace WinPlayer.Player
 
             for (var i = _currentWaveFormGenerators.GetLowerBound(0); i < _currentWaveFormGenerators.GetUpperBound(0); i++)
             {
-                var note = _currentPattern.Tracks[i].Notes[_lineIndex];
+                var note = _currentPattern.Tracks[i].Notes[_lineIndex].Clone();
 
                 if (note.NoteNum != 0)
                 {
@@ -244,7 +244,7 @@ namespace WinPlayer.Player
                 } 
                 else if (note.Command != Commands.None)
                 {
-                    _effects[i] = CommandFactory.GetCommand(note.Command, note.CommandParam, note);
+                    _effects[i] = CommandFactory.GetCommand(note.Command, note.CommandParam, _currentNotes[i]);
                 }
             }
         }

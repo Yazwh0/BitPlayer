@@ -120,10 +120,17 @@ namespace WinPlayer
 
             NoteEdit.NoteChanged += NoteEdit_NoteChanged;
 
+            TrackControl.TrackChanged += TrackEditor_TrackChanged;
+
             _timer = new System.Timers.Timer();
             _timer.Interval = 20000;
             _timer.Elapsed += _timer_Elapsed;
             _timer.Enabled = true;
+        }
+
+        private void TrackEditor_TrackChanged(object? sender, Controls.TrackControlTradeUpdateEventArgs e)
+        {
+            _trackEditor?.Refresh();
         }
 
         private void Patterns_PatternLengthChange(object? sender, Controls.PatternLengthChangeEventArgs e)
@@ -240,6 +247,7 @@ namespace WinPlayer
                 return;
 
             _trackEditor = track;
+            TrackControl.SetTrack(track.Value);
         }
 
         private void NoteEdit_NoteChanged(object? sender, Controls.NoteEditorChangedEventArgs e)
@@ -261,6 +269,7 @@ namespace WinPlayer
         private void Instruments_InstrumentChange(object? sender, Controls.InstrumentChangeEventArgs e)
         {
             NoteEdit.SetInstrument(e.Instrument.InstrumentNumber);
+            TrackControl.SetInstrument(e.Instrument.InstrumentNumber);
         }
 
         private void Track_NoteChanged(object? sender, Controls.TrackEditorNoteChangedEventArgs e)
@@ -279,25 +288,25 @@ namespace WinPlayer
         private void DisplayPattern()
         {
             _currentPattern = _song.Patterns[_patternNumber];
-            Track0.Value = _currentPattern.Tracks[0].Notes;
-            Track1.Value = _currentPattern.Tracks[1].Notes;
-            Track2.Value = _currentPattern.Tracks[2].Notes;
-            Track3.Value = _currentPattern.Tracks[3].Notes;
+            Track0.Value = _currentPattern.Tracks[0];
+            Track1.Value = _currentPattern.Tracks[1];
+            Track2.Value = _currentPattern.Tracks[2];
+            Track3.Value = _currentPattern.Tracks[3];
 
-            Track4.Value = _currentPattern.Tracks[4].Notes;
-            Track5.Value = _currentPattern.Tracks[5].Notes;
-            Track6.Value = _currentPattern.Tracks[6].Notes;
-            Track7.Value = _currentPattern.Tracks[7].Notes;
+            Track4.Value = _currentPattern.Tracks[4];
+            Track5.Value = _currentPattern.Tracks[5];
+            Track6.Value = _currentPattern.Tracks[6];
+            Track7.Value = _currentPattern.Tracks[7];
         
-            Track8.Value = _currentPattern.Tracks[8].Notes;
-            Track9.Value = _currentPattern.Tracks[9].Notes;
-            TrackA.Value = _currentPattern.Tracks[10].Notes;
-            TrackB.Value = _currentPattern.Tracks[11].Notes;
+            Track8.Value = _currentPattern.Tracks[8];
+            Track9.Value = _currentPattern.Tracks[9];
+            TrackA.Value = _currentPattern.Tracks[10];
+            TrackB.Value = _currentPattern.Tracks[11];
 
-            TrackC.Value = _currentPattern.Tracks[12].Notes;
-            TrackD.Value = _currentPattern.Tracks[13].Notes;
-            TrackE.Value = _currentPattern.Tracks[14].Notes;
-            TrackF.Value = _currentPattern.Tracks[15].Notes;
+            TrackC.Value = _currentPattern.Tracks[12];
+            TrackD.Value = _currentPattern.Tracks[13];
+            TrackE.Value = _currentPattern.Tracks[14];
+            TrackF.Value = _currentPattern.Tracks[15];
         }
 
         private void _midiIn_ErrorReceived(object? sender, MidiInMessageEventArgs e)

@@ -4,7 +4,7 @@
 
 if ($?)
 {
-    c:/dev/x16emu/x16emu -prg build.prg -debug -run -abufs 16 -scale 2 -quality nearest -echo iso
+    c:/dev/x16emu/x16emu -prg build.prg -debug -run -abufs 64 -scale 2 -quality nearest -echo iso
     Remove-Item ./src/*.o
 } else {
     "Failed"

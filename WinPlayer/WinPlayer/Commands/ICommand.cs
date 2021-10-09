@@ -28,7 +28,9 @@ namespace WinPlayer.Command
         PitchShiftDown,
         Silence,
         FrequencySlideUp,
-        FrequencySlideDown
+        FrequencySlideDown,
+        SetNote,
+        SongEvent
     }
 
     public static class CommandFactory
@@ -48,6 +50,8 @@ namespace WinPlayer.Command
                 Commands.Silence => new Silence(),
                 Commands.FrequencySlideUp => new FrequencySlideUp(),
                 Commands.FrequencySlideDown => new FrequencySlideDown(),
+                Commands.SetNote => new SetNoteNum(),
+                Commands.SongEvent => new SongEvent(),
                 _ => new Clear()
             };
 
@@ -69,6 +73,8 @@ namespace WinPlayer.Command
             Commands.Silence => "Silence",
             Commands.FrequencySlideUp => "Freq Sl Up",
             Commands.FrequencySlideDown => "Freq Sl Dn",
+            Commands.SetNote => "Set Note",
+            Commands.SongEvent => "Evt",
             _ => "??"
         };
     }

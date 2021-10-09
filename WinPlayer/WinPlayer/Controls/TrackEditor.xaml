@@ -14,13 +14,13 @@
             <RowDefinition Height="*"></RowDefinition>
         </Grid.RowDefinitions>
         <DataGrid x:Name="Notes" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Stretch" Height="auto" Margin="0,0,0,0" VerticalAlignment="Stretch" Width="auto" 
-                  ItemsSource="{Binding}" AutoGenerateColumns="False" SelectionChanged="Notes_SelectionChanged" IsReadOnly="true" SelectionUnit="FullRow" SelectionMode="Single">
+                  ItemsSource="{Binding}" AutoGenerateColumns="False" SelectionChanged="Notes_SelectionChanged" IsReadOnly="false" SelectionUnit="FullRow" SelectionMode="Single" BeginningEdit="Notes_BeginningEdit" CellEditEnding="Notes_CellEditEnding" MouseDoubleClick="Notes_MouseDoubleClick">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Pos" Binding="{Binding PositionStr}" CanUserSort="False"/>
-                <DataGridTextColumn Header="Note" Binding="{Binding NoteStr}" CanUserSort="False"/>
+                <DataGridTextColumn Header="Pos" Binding="{Binding PositionStr}" CanUserSort="False" IsReadOnly="True" />
+                <DataGridTextColumn Header="Note" Binding="{Binding NoteStr}" CanUserSort="False" IsReadOnly="True" />
                 <DataGridTextColumn Header="Ins" Binding="{Binding InstrumentStr}" CanUserSort="False"/>
-                <DataGridTextColumn Header="Com" Binding="{Binding CommandStr}" CanUserSort="False"/>
-                <DataGridTextColumn Header="Par" Binding="{Binding CommandParamStr}" CanUserSort="False"/>
+                <DataGridTextColumn Header="Com" Binding="{Binding CommandStr}" CanUserSort="False" IsReadOnly="True" />
+                <DataGridTextColumn Header="Par" Binding="{Binding CommandParamStr}" CanUserSort="False" IsReadOnly="True" />
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

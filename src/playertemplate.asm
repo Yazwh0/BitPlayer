@@ -251,7 +251,7 @@ Play_Instrument I
 .endrepeat
 
 ; if there are less than 8 tracks, double up for better volume.
-.if ###PatternWidth <= 8
+.if ###PatternWidth <= 1
 
     lda #1
     sta CTRL
@@ -266,7 +266,14 @@ Play_Instrument I
 
     stz CTRL
 
-    ldx ####PatternWidth + 1
+.if ###PatternWidth <= 3
+    ldx ####PatternWidth * 4
+.elseif ###PatternWidth <= 4 
+    ldx ####PatternWidth * 3
+.else
+    ldx ####PatternWidth 
+.endif
+
 instrument_copy_loop:
     lda DATA1
     sta DATA0
@@ -412,45 +419,124 @@ restart:
 command_jump_table:
 ###CommandJumpTable
 
-.proc command_pitchshiftup
-    ; number of shifts
+.proc command_songevent
+    lda INSTRUMENT_COMMAND_PARAM1, y
+    beq setflag
+
+    stz INSTRUMENT_DATA_COMMAND, x
+    rts
+
+setflag:
+    lda #$01
+    sta INSTRUMENT_COMMAND_PARAM1, y
+    rts
+.endproc
+
+.proc command_setnote
     ldx INSTRUMENT_COMMAND_PARAM0, y
-
-    lda INSTRUMENT_NUMBER, y
-    tay ; y now is the note number
-loop:
-    clc
-    lda player_slidelookup, y
-    adc PLAYER_SCRATCH_FREQL
-    sta PLAYER_SCRATCH_FREQL
-    lda player_slidelookup+1, y
-    adc PLAYER_SCRATCH_FREQH
-    sta PLAYER_SCRATCH_FREQH
-
     dex
-    bne loop
+    txa
+    clc
+    rol
+    sta INSTRUMENT_NUMBER, y
+
+    tay
+
+    lda player_notelookup, y
+    sta PLAYER_SCRATCH_FREQL
+    lda player_notelookup+1, y
+    sta PLAYER_SCRATCH_FREQH
 
     rts
 .endproc
 
-.proc command_pitchshiftdown
-    ; number of shifts
-    ldx INSTRUMENT_COMMAND_PARAM0, y
-
-    lda INSTRUMENT_NUMBER, y
-    tay ; y now is the note number
-loop:
+.proc command_pitchshiftup
+   ; number of steps, 1-3.
+    lda INSTRUMENT_COMMAND_PARAM0, y
     clc
-    lda player_slidelookup, y
-    sbc PLAYER_SCRATCH_FREQL
+    rol ; multiply by 2 for the jump table.
+    tax
+
+    ; y now has the instrument number.
+    lda INSTRUMENT_NUMBER, y
+    tay
+
+    jmp (jumptable, x)
+jumptable:
+    .word normal
+    .word low
+    .word mid
+    .word high
+
+normal:
+    lda player_notelookup, y
     sta PLAYER_SCRATCH_FREQL
-    lda player_slidelookup+1, y
-    sbc PLAYER_SCRATCH_FREQH
+    lda player_notelookup+1, y
     sta PLAYER_SCRATCH_FREQH
+    rts
+low:
+    lda player_slide_low, y
+    sta PLAYER_SCRATCH_FREQL
+    lda player_slide_low+1, y
+    sta PLAYER_SCRATCH_FREQH
+    rts
+mid:
+    lda player_slide_mid, y
+    sta PLAYER_SCRATCH_FREQL
+    lda player_slide_mid+1, y
+    sta PLAYER_SCRATCH_FREQH
+    rts
+high:
+    lda player_slide_high, y
+    sta PLAYER_SCRATCH_FREQL
+    lda player_slide_high+1, y
+    sta PLAYER_SCRATCH_FREQH
+    rts
+.endproc
 
-    dex
-    bne loop
+.proc command_pitchshiftdown
+    ; number of steps, 1-3.
+    lda INSTRUMENT_COMMAND_PARAM0, y
+    clc
+    rol ; multiply by 2 for the jump table.
+    tax
 
+    ; y now has the instrument number.
+    lda INSTRUMENT_NUMBER, y
+    tay
+    dey
+    dey
+
+    jmp (jumptable, x)
+jumptable:
+    .word normal
+    .word high
+    .word mid
+    .word low
+
+normal:
+    lda player_notelookup, y
+    sta PLAYER_SCRATCH_FREQL
+    lda player_notelookup+1, y
+    sta PLAYER_SCRATCH_FREQH
+    rts
+low:
+    lda player_slide_low, y
+    sta PLAYER_SCRATCH_FREQL
+    lda player_slide_low+1, y
+    sta PLAYER_SCRATCH_FREQH
+    rts
+mid:
+    lda player_slide_mid, y
+    sta PLAYER_SCRATCH_FREQL
+    lda player_slide_mid+1, y
+    sta PLAYER_SCRATCH_FREQH
+    rts
+high:
+    lda player_slide_high, y
+    sta PLAYER_SCRATCH_FREQL
+    lda player_slide_high+1, y
+    sta PLAYER_SCRATCH_FREQH
     rts
 .endproc
 
@@ -458,12 +544,46 @@ loop:
     ; number of shifts
     ldx INSTRUMENT_COMMAND_PARAM1, y
     beq slide_done
+    dex 
+    stx INSTRUMENT_COMMAND_PARAM1, y
 
+    ; change in frequency
+    clc
+    lda PLAYER_SCRATCH_FREQL
+    adc INSTRUMENT_COMMAND_PARAM0, y
+    sta PLAYER_SCRATCH_FREQL
+
+    lda PLAYER_SCRATCH_FREQH
+    adc #$00
+    sta PLAYER_SCRATCH_FREQH
+
+    clc
+    rts
 slide_done:
+    stx INSTRUMENT_DATA_COMMAND, y ; stop this being applied again
     rts
 .endproc
 
 .proc command_frequencyslidedown
+    ; number of shifts
+    ldx INSTRUMENT_COMMAND_PARAM1, y
+    beq slide_done
+    dex 
+    stx INSTRUMENT_COMMAND_PARAM1, y
+
+    ; change in frequency
+    sec
+    lda PLAYER_SCRATCH_FREQL
+    sbc INSTRUMENT_COMMAND_PARAM0, y
+    sta PLAYER_SCRATCH_FREQL
+
+    lda PLAYER_SCRATCH_FREQH
+    sbc #00
+    sta PLAYER_SCRATCH_FREQH
+    clc
+    rts        
+slide_done:
+    stx INSTRUMENT_DATA_COMMAND, y
     rts
 .endproc
 
@@ -524,12 +644,12 @@ loop:
     lda INSTRUMENT_NUMBER, y
     tay ; y now is the note number
 loop:
-    clc
-    lda player_slidelookup, y
-    sbc PLAYER_SCRATCH_FREQL
+    sec
+    lda PLAYER_SCRATCH_FREQL
+    sbc player_slidelookup, y
     sta PLAYER_SCRATCH_FREQL
-    lda player_slidelookup+1, y
-    sbc PLAYER_SCRATCH_FREQH
+    lda PLAYER_SCRATCH_FREQH
+    sbc player_slidelookup+1, y
     sta PLAYER_SCRATCH_FREQH
 
     dex
@@ -558,6 +678,12 @@ player_notelookup:
 ###NoteNumLookup
 player_slidelookup:
 ###NoteSlideLookup
+player_slide_low:
+###NoteSlideLow
+player_slide_mid:
+###NoteSlideMid
+player_slide_high:
+###NoteSlideHigh
 .endmacro
 
 

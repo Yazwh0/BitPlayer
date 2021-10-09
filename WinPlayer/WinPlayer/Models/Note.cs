@@ -66,6 +66,10 @@ namespace WinPlayer.Models
 
                 return InstrumentNumber.ToString("X2");
             }
+            set
+            {
+                InstrumentNumber = Convert.ToInt32(value, 16);
+            }
         }
 
         public Note Clone() => new Note()

@@ -16,7 +16,7 @@
             <RowDefinition Height="1*"></RowDefinition>
         </Grid.RowDefinitions>
 
-        <Controls:InstrumentList Grid.Row="0" Grid.Column="0" x:Name="Instruments" HorizontalAlignment="Left" Height="179" Margin="10,10,0,0" VerticalAlignment="Top" Width="262"/>
+        <Controls:InstrumentList Grid.Row="0" Grid.Column="0" x:Name="Instruments" HorizontalAlignment="Left" Height="179" Margin="10,10,0,0" VerticalAlignment="Top" Width="262" />
 
         <TabControl Grid.Row="1" Grid.Column="0" Height="auto" Margin="0,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Width="auto" SelectionChanged="TabControl_SelectionChanged">
             <TabItem Header="Track">
@@ -128,5 +128,6 @@
         <Controls:PatternList x:Name="Patterns" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" Height="179" Margin="847,10,0,0" VerticalAlignment="Top" Width="280"/>
         <TextBox x:Name="Playlist" HorizontalAlignment="Left" Height="22" Margin="1143,10,0,0" Text="0" TextWrapping="Wrap" VerticalAlignment="Top" Width="316" TextChanged="Playlist_TextChanged"/>
         <Button Content="X16" HorizontalAlignment="Left" Height="42" Margin="676,119,0,0" VerticalAlignment="Top" Width="130" Click="X16Button_Click"/>
+        <Controls:TrackControl x:Name="TrackControl" HorizontalAlignment="Left" Height="57" Margin="1143,143,0,0" VerticalAlignment="Top" Width="376" Grid.RowSpan="2"/>
     </Grid>
 </Window>

@@ -23,7 +23,7 @@ namespace WinPlayer.Command
                 _shift = ((ICommand)this).Parameters0;
             }
 
-            generator.Frequency = FrequencyLookup.Lookup(generator.NoteNumber).Frequency + FrequencyLookup.FrequencySlide(generator.NoteNumber) * _shift;
+            generator.Frequency = FrequencyLookup.FrequencyStep(generator.NoteNumber, _shift);
 
         }
     }
@@ -44,7 +44,20 @@ namespace WinPlayer.Command
                 _shift = ((ICommand)this).Parameters0;
             }
 
-            generator.Frequency = FrequencyLookup.Lookup(generator.NoteNumber).Frequency - FrequencyLookup.FrequencySlide(generator.NoteNumber) * _shift;
+            generator.Frequency = FrequencyLookup.FrequencyStep(generator.NoteNumber - 1, 4- _shift);
+        }
+    }
+
+    public class SetNoteNum : ICommand
+    {
+        public Models.Note? Note { get; set; }
+        public short Parameters { get; set; }
+
+        public void ApplyNext(IVeraWaveform generator)
+        {
+            var noteNum = ((ICommand)this).Parameters0;
+            generator.Frequency = FrequencyLookup.FrequencyStep(noteNum, 0);
+            Note.NoteNum = noteNum;
         }
     }
 }

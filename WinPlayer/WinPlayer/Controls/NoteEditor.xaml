@@ -14,15 +14,18 @@
             <ColumnDefinition Width="*"></ColumnDefinition>
             <ColumnDefinition Width="*"></ColumnDefinition>
             <ColumnDefinition Width="*"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="22"></RowDefinition>
         </Grid.RowDefinitions>
+        
         <TextBox x:Name="NoteText" Grid.Row="0" Grid.Column="0" Width="auto" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Height="auto" Text="" Margin="0,0,3,0" IsReadOnly="true"/>
-        <ComboBox x:Name="InstrumentList" Grid.Row="0" Grid.Column="1" Width="auto" HorizontalAlignment="Stretch" Margin="3,0,3,0" ItemsSource="{Binding}" DisplayMemberPath="DisplayName" SelectedItem="{Binding Path=DisplayName}" SelectedValue="{Binding Path=InstrumentNumber}" SelectedValuePath="InstrumentNumber" SelectionChanged="InstrumentList_SelectionChanged" />
-        <ComboBox x:Name="CommandList" Grid.Row="0" Grid.Column="2" Width="auto" HorizontalAlignment="Stretch" Margin="3,0,3,0" SelectionChanged="CommandList_SelectionChanged" />
-        <TextBox x:Name="CommandParameter" Grid.Row="0" Grid.Column="3" Width="auto" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Height="auto" Text="" Margin="3,0,3,0" TextChanged="CommandParameter_TextChanged"/>
-        <CheckBox x:Name="FreeplayCheck" Content="Freeplay" Grid.Column="4" HorizontalAlignment="Stretch" Height="23" Margin="3,4,3,0" VerticalAlignment="Stretch" Width="auto"/>
-        <Button Content="Update" Grid.Row="0" Grid.Column="5" HorizontalAlignment="Stretch" Height="21" Margin="3,0,0,0" VerticalAlignment="Stretch" Width="auto" Click="Button_Click"/>
+        <Label x:Name="NoteNumber" Grid.Row="0" Grid.Column="1" Margin="3,0,3,0" Width="auto" Height="auto" HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" BorderThickness="0"></Label>
+        <ComboBox x:Name="InstrumentList" Grid.Row="0" Grid.Column="2" Width="auto" HorizontalAlignment="Stretch" Margin="3,0,3,0" ItemsSource="{Binding}" DisplayMemberPath="DisplayName" SelectedItem="{Binding Path=DisplayName}" SelectedValue="{Binding Path=InstrumentNumber}" SelectedValuePath="InstrumentNumber" SelectionChanged="InstrumentList_SelectionChanged" />
+        <ComboBox x:Name="CommandList" Grid.Row="0" Grid.Column="3" Width="auto" HorizontalAlignment="Stretch" Margin="3,0,3,0" SelectionChanged="CommandList_SelectionChanged" />
+        <TextBox x:Name="CommandParameter" Grid.Row="0" Grid.Column="4" Width="auto" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Height="auto" Text="" Margin="3,0,3,0" TextChanged="CommandParameter_TextChanged"/>
+        <CheckBox x:Name="FreeplayCheck" Content="Freeplay" Grid.Column="5" HorizontalAlignment="Stretch" Height="23" Margin="3,4,3,0" VerticalAlignment="Stretch" Width="auto"/>
+        <Button Content="Update" Grid.Row="0" Grid.Column="6" HorizontalAlignment="Stretch" Height="21" Margin="3,0,0,0" VerticalAlignment="Stretch" Width="auto" Click="Button_Click"/>
     </Grid>
 </UserControl>

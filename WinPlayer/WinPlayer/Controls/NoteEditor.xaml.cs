@@ -118,12 +118,14 @@ namespace WinPlayer.Controls
         {
             NoteText.Text = _value?.NoteStr ?? "";
 
-            if (_value?.NoteNum != 0)
-            {
+            //if (_value?.NoteNum != 0)
+            //{
                 InstrumentList.SelectedValue = _value?.InstrumentNumber;
                 CommandParameter.Text = _value?.CommandParam.ToString("X4");
                 CommandList.SelectedItem = _value?.Command;
-            }
+            //}
+
+            NoteNumber.Content = _value?.NoteNum.ToString("X2");
         }
 
         private void InstrumentList_SelectionChanged(object sender, SelectionChangedEventArgs e)
