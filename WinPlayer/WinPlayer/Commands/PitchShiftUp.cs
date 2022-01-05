@@ -24,7 +24,6 @@ namespace WinPlayer.Command
             }
 
             generator.Frequency = FrequencyLookup.FrequencyStep(generator.NoteNumber, _shift);
-
         }
     }
 

@@ -373,6 +373,8 @@ next_voice:
     cmp #$ff    ; done.
     bne next_voice_loop
 
+    ; add check for PCM
+
     lda DATA0
     sta NEXT_LINE_COUNTER ; store in next frame counter
 

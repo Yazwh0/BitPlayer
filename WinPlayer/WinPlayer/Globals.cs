@@ -36,7 +36,7 @@ namespace WinPlayer
         public string AutoSaveFileName = "autosave.mod.json";
         public string SongFileName = "song.mod.json";
         public string ExportFileName = "export.asm";
-        public string ExportTemplateName = @"D:\Documents\Dropbox\Source\X16\Player\src\playertemplate.asm";
-        public string X16RunFileName = @"D:\Documents\Dropbox\Source\X16\Player\build.ps1";
+        public string ExportTemplateName = @"D:\Documents\Source\Player\src\playertemplate.asm";
+        public string X16RunFileName = @"D:\Documents\Source\Player\build.ps1";
     }
 }

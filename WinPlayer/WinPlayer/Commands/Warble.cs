@@ -14,33 +14,47 @@ namespace WinPlayer.Command
         public short Parameters { get; set ; }
 
         private int _state = 0;
+        private int _stateStep = 0;
         private double _baseFreq = 0;
+        private int _stateStepStart = 0;
+
+        private bool _initialised = false;
 
         public void ApplyNext(IVeraWaveform generator)
         {
-            if (_state > 3)
+            if (!_initialised)
+            {
+                _stateStepStart = ((ICommand)this).Parameters0;
+                _stateStep = _stateStepStart;
                 _state = 0;
+                _baseFreq = generator.Frequency;
+            }
 
             switch (_state)
             {
                 case 0:
-                    if (_baseFreq == 0)
-                        _baseFreq = generator.Frequency;
-                    else
-                        generator.Frequency = _baseFreq;
+                    generator.Frequency = FrequencyLookup.FrequencyStep(generator.NoteNumber, 0);
                     break;
                 case 1:
-                    generator.Frequency = _baseFreq + Parameters;
+                    generator.Frequency = FrequencyLookup.FrequencyStep(generator.NoteNumber, 1);
                     break;
                 case 2:
-                    generator.Frequency = _baseFreq ;
+                    generator.Frequency = FrequencyLookup.FrequencyStep(generator.NoteNumber, 0);
                     break;
                 case 3:
-                    generator.Frequency = _baseFreq - Parameters;
+                    generator.Frequency = FrequencyLookup.FrequencyStep(generator.NoteNumber-1, 3);
                     break;
             }
 
-            _state++;
+            _stateStep--;
+            if (_stateStep == 0)
+            {
+                _state++;
+                _stateStep = _stateStepStart;
+
+                if (_state > 3)
+                    _state = 0;
+            }
         }
 
         public void Remove(IVeraWaveform generator)

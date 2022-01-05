@@ -30,7 +30,8 @@ namespace WinPlayer.Command
         FrequencySlideUp,
         FrequencySlideDown,
         SetNote,
-        SongEvent
+        SongEvent,
+        Warble
     }
 
     public static class CommandFactory
@@ -40,7 +41,7 @@ namespace WinPlayer.Command
             ICommand toReturn = effect switch
             {
                 Commands.FrequencySlide => new Clear(),
-                //Commands.Warble => new Warble(),
+                Commands.Warble => new Warble(),
                 Commands.ClearCommand => new Clear(),
                 //Commands.NoteSlide => new NoteSlide(),
                 Commands.SlideUpToNote => new SlideUpToNote(),
@@ -63,7 +64,7 @@ namespace WinPlayer.Command
         public static string GetDisplay(Commands effect) => effect switch
         {
             Commands.None => "",
-            //Commands.Warble => "Warble",
+            Commands.Warble => "Warble",
             //Commands.NoteSlide => "Nte Sl",
             Commands.ClearCommand => "Clear",
             Commands.SlideUpToNote => "Sl Nte Up",
