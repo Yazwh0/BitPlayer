@@ -313,10 +313,10 @@ no_interupt:
     stz DATA0
     stz DATA0
 
-    lda #'$'
-    sta DATA0
-    lda #$01
-    sta DATA0
+;   lda #'$'
+;   sta DATA0
+;   lda #$01
+;   sta DATA0
 
     ; frequency
     lda DATA1
@@ -343,10 +343,10 @@ no_interupt:
     stz DATA0
     stz DATA0
 
-    lda #'$'
-    sta DATA0
-    lda #$01
-    sta DATA0
+;    lda #'$'
+;    sta DATA0
+;    lda #$01
+;    sta DATA0
 
     lda pINSTRUMENT_DATA_ZP, x
     pha
@@ -386,10 +386,16 @@ no_interupt:
     lda pINSTRUMENT_COMMAND, x
     display_a_hex
 
+    lda pINSTRUMENT_COMMAND + 1, x
+    display_a_hex
+
     stz DATA0
     stz DATA0
 
-    lda pINSTRUMENT_COMMAND + 1, x
+    lda pCOMMAND_VARIABLES_DATA, x
+    display_a_hex
+
+    lda pCOMMAND_VARIABLES_DATA + 1, x
     display_a_hex
 
     rts
@@ -483,7 +489,7 @@ no_interupt:
 .include "../library/yazwhosprite.asm"
 
 table_heading:
-.byte "    vera        addr ps cm nm rp c1 c2"
+.byte "   vera       addr ps cm nm rp comm data"
 .byte $ff
 frame_heading:
 .byte "frame", $ff

@@ -22,7 +22,7 @@
 .scope
 
 ; need to run this maco to define where to keep the data.
-.macro Player_Variables frameIndex, lineIndex, patternIndex, nextLineCounter, vhPos, vmPos, vlPos, instrumentDataZP, instrumentCommandData, instrumentPosition, instrumentNumber, playerScratch, commandVariables
+.macro Player_Variables frameIndex, lineIndex, patternIndex, nextLineCounter, vhPos, vmPos, vlPos, instrumentDataZP, instrumentCommandData, instrumentPosition, instrumentNumber, playerScratch, commandVariables, commandVariableData
 ; Memory locations for variables
 FRAME_INDEX = frameIndex
 LINE_INDEX = lineIndex
@@ -39,11 +39,17 @@ PATTERN_POS_L = vlPos
 INSTRUMENT_START = instrumentDataZP
 INSTRUMENT_ADDR = instrumentDataZP
 
-; Needs 2 * ###PatternWidth bytes. 
-; .word command parameters
+; Needs 4 * ###PatternWidth bytes. 
+; .byte command parameters
 INSTRUMENT_COMMAND_START = instrumentCommandData
 INSTRUMENT_COMMAND_PARAM0 = instrumentCommandData
 INSTRUMENT_COMMAND_PARAM1 = instrumentCommandData + 1
+
+; Needs 4 * ###PatternWidth bytes. 
+; .byte command variable space
+COMMAND_VARIABLE_START = commandVariableData
+COMMAND_VARIABLE0 = commandVariableData
+COMMAND_VARIABLE1 = commandVariableData + 1
 
 ; instrument data 
 ; .byte position (decreases)
@@ -66,6 +72,7 @@ PLAYER_SCRATCH_FREQH = PLAYER_SCRATCH + 1
 PLAYER_SCRATCH_VOLUME = PLAYER_SCRATCH + 2
 PLAYER_SCRATCH_WIDTH = PLAYER_SCRATCH + 3
 
+; 2 bytes of temporary space.
 COMMAND_VARIABLES0 = commandVariables
 COMMAND_VARIABLES1 = COMMAND_VARIABLES0 + 1
 
@@ -358,10 +365,17 @@ no_note_change:
     lda DATA0
     sta INSTRUMENT_COMMAND_PARAM1, y
 
+    lda #0
+    sta COMMAND_VARIABLE0, y
+    sta COMMAND_VARIABLE1, y
+
     jmp next_voice
 no_command:
-    lda #0
+    ; a is zero here.
     sta INSTRUMENT_DATA_COMMAND, y
+
+    sta COMMAND_VARIABLE0, y
+    sta COMMAND_VARIABLE1, y
 
 next_voice:
     iny
@@ -448,6 +462,134 @@ setflag:
     sta PLAYER_SCRATCH_FREQL
     lda player_notelookup+1, y
     sta PLAYER_SCRATCH_FREQH
+
+    rts
+.endproc
+
+.proc command_warble
+    ; param 0: Amplitude 0-7. Use bit7 for direction.
+    ; param 1: Frames per step: 0-7.
+
+    ; variable 0 : frame count, counts down.
+    ; variable 1 : steps position
+
+    lda COMMAND_VARIABLE0, y
+    beq init_warble_jump
+
+    dec
+    beq next_part
+    sta COMMAND_VARIABLE0, y
+
+    rts
+init_warble_jump:
+    jmp init_warble
+
+next_part:
+    ; find the next step in the sawtooth
+    tya ; save y
+    pha
+
+    lda INSTRUMENT_COMMAND_PARAM0, y
+    bmi going_down
+
+    lda COMMAND_VARIABLE1, y
+    inc
+    jmp step_done
+
+going_down:
+    lda COMMAND_VARIABLE1, y
+    dec
+step_done:
+    sta COMMAND_VARIABLE1, y
+
+    cmp INSTRUMENT_COMMAND_PARAM0, y
+    beq change_direction
+
+    jmp step_complete
+
+change_direction:    
+    ; invert the amplitude so we can cmp on the way down
+    tax
+    lda INSTRUMENT_COMMAND_PARAM0, y
+    eor #$ff
+    inc 
+    sta INSTRUMENT_COMMAND_PARAM0, y
+    txa
+
+step_complete:
+    ; a has the step for the frequency to use (h, m, l, 0, l, m, h)
+
+    and #$ff ; sets flags based on a.
+    bmi lower_number
+
+    and #%00000111
+    clc
+    rol
+    tax ; x now looks into the jump table
+
+    lda INSTRUMENT_NUMBER, y
+    tay ; y now has the instrument number
+
+    jmp (jumptable, x)
+
+lower_number: ; use the lower instrument number
+    eor #$ff ; inverse
+    inc
+    and #%00000111
+    clc
+    rol
+    tax ; x now looks into the jump table
+
+    lda INSTRUMENT_NUMBER, y
+    tay ; y now has the instrument number
+    dey
+    dey
+
+    jmp (reversejumptable, x)
+
+jumptable:
+    .word normal
+    .word low
+    .word mid
+    .word high
+reversejumptable:
+    .word normal
+    .word high
+    .word mid
+    .word low
+
+normal:
+    lda player_notelookup, y
+    sta PLAYER_SCRATCH_FREQL
+    lda player_notelookup+1, y
+    sta PLAYER_SCRATCH_FREQH
+    jmp done
+low:
+    lda player_slide_low, y
+    sta PLAYER_SCRATCH_FREQL
+    lda player_slide_low+1, y
+    sta PLAYER_SCRATCH_FREQH
+    jmp done
+mid:
+    lda player_slide_mid, y
+    sta PLAYER_SCRATCH_FREQL
+    lda player_slide_mid+1, y
+    sta PLAYER_SCRATCH_FREQH
+    jmp done
+high:
+    lda player_slide_high, y
+    sta PLAYER_SCRATCH_FREQL
+    lda player_slide_high+1, y
+    sta PLAYER_SCRATCH_FREQH
+
+done:
+    pla
+    tay
+
+init_warble:
+    ; when we init, just set the frame count
+    lda INSTRUMENT_COMMAND_PARAM1, y
+    sta COMMAND_VARIABLE0, y
 
     rts
 .endproc
