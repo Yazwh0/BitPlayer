@@ -13,10 +13,12 @@ namespace WinPlayer.Command
         public Models.Note? Note { get; set; }
         public short Parameters { get; set ; }
 
-        private int _state = 0;
-        private int _stateStep = 0;
+        private int _steps = 0;
+        private int _changeCnt = 0;
         private double _baseFreq = 0;
-        private int _stateStepStart = 0;
+        private int _framesPerStep = 0;
+        private int _amplitude = 1;
+        public bool _up = true;
 
         private bool _initialised = false;
 
@@ -24,36 +26,56 @@ namespace WinPlayer.Command
         {
             if (!_initialised)
             {
-                _stateStepStart = ((ICommand)this).Parameters0;
-                _stateStep = _stateStepStart;
-                _state = 0;
+                _framesPerStep = ((ICommand)this).Parameters1;
+                _framesPerStep = _framesPerStep == 0 ? 1 : _framesPerStep;
+                _framesPerStep = _framesPerStep > 7 ? 7 : _framesPerStep;
+                _amplitude = ((ICommand)this).Parameters0;
+                _amplitude = _amplitude == 0 ? 1 : _amplitude;
+                _amplitude = _amplitude > 3 ? 3 : _amplitude; // cant go through a semi tone.
+                _changeCnt = _framesPerStep;
+                _steps = 0;
                 _baseFreq = generator.Frequency;
+                _up = true;
+                _initialised = true;
             }
 
-            switch (_state)
+            if (_steps == 0)
             {
-                case 0:
-                    generator.Frequency = FrequencyLookup.FrequencyStep(generator.NoteNumber, 0);
-                    break;
-                case 1:
-                    generator.Frequency = FrequencyLookup.FrequencyStep(generator.NoteNumber, 1);
-                    break;
-                case 2:
-                    generator.Frequency = FrequencyLookup.FrequencyStep(generator.NoteNumber, 0);
-                    break;
-                case 3:
-                    generator.Frequency = FrequencyLookup.FrequencyStep(generator.NoteNumber-1, 3);
-                    break;
+                generator.Frequency = FrequencyLookup.FrequencyStep(generator.NoteNumber, 0);
+            } 
+            else
+            {
+                var thisSteps = _steps >> 1;
+                double freq;
+                if (thisSteps > 0)
+                {
+                    freq = FrequencyLookup.FrequencyStep(generator.NoteNumber, _steps);
+                } 
+                else
+                {
+                    freq = FrequencyLookup.FrequencyStep(generator.NoteNumber-1, 4-thisSteps);
+                }
+                generator.Frequency = freq;
             }
 
-            _stateStep--;
-            if (_stateStep == 0)
+            _changeCnt--;
+            if (_changeCnt == 0)
             {
-                _state++;
-                _stateStep = _stateStepStart;
+                _changeCnt = _framesPerStep;
+                if (_up)
+                {
+                    _steps++;
 
-                if (_state > 3)
-                    _state = 0;
+                    if (_steps == _amplitude)
+                        _up = false;
+                } 
+                else
+                {
+                    _steps--;
+
+                    if (_steps == -_amplitude)
+                        _up = true;                    
+                }
             }
         }
 
